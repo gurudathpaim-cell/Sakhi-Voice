@@ -1,69 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sakhi Voice</title>
-  <meta name="description" content="Sakhi Voice — multilingual pseudo lip-sync demo (single file)" />
-  <link rel="icon" href="./Sakhi_logo.png" />
-  <style>
-    :root { --bg:#0b1020; --text:#e9eef9; --accent:#e63946; --glass:rgba(255,255,255,.08) }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;background:radial-gradient(80% 80% at 50% 20%, #16224b 0%, var(--bg) 55%);
-      color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
-    .wrap{min-height:100dvh;display:flex;flex-direction:column;gap:12px;padding:14px;max-width:520px;margin:0 auto}
-    .card{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--glass);
-      border-radius:18px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,.35)}
-    header{display:flex;align-items:center;gap:10px;padding-top:12px}
-    header img{width:28px;height:28px;border-radius:6px}
-    header h1{font-size:1.1rem;margin:0;font-weight:650;letter-spacing:.2px}
-    .avatar-panel{display:grid;gap:10px;grid-template-rows:1fr auto;height:calc(100dvh - 220px);min-height:360px}
-    .stage{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--glass);
-      background:linear-gradient(180deg,#24325f 0%,#1a2142 65%,#121a34 100%);display:grid;place-items:center}
-    .avatar{width:min(92%,380px);aspect-ratio:9/16;border-radius:20px;position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.06);
-      background:linear-gradient(160deg,#ffe8f0 0%,#ffd8e8 40%,#fbd2e8 60%,#ffdfe8 100%)}
-    .saree{position:absolute;bottom:-10%;left:50%;transform:translateX(-50%);width:130%;height:62%;
-      background:radial-gradient(60% 40% at 50% 10%,rgba(255,255,255,.45),rgba(255,255,255,0) 60%),
-      linear-gradient(100deg,#c8005a,#ff2a7f 40%,#ff5b9d 70%,#ff7fb4);
-      clip-path:polygon(10% 0%,90% 0%,100% 35%,84% 100%,16% 100%,0% 35%);filter:drop-shadow(0 10px 14px rgba(200,0,60,.35))}
-    .head{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:62%;aspect-ratio:1/1.1;background:#f7d2c6;
-      border-radius:50% 50% 42% 42%/48% 48% 52% 52%;box-shadow:0 6px 0 rgba(200,120,120,.25) inset}
-    .hair{position:absolute;inset:-6% -6% 40% -6%;background:#2a1a17;border-bottom-left-radius:60% 50%;border-bottom-right-radius:60% 50%;
-      box-shadow:0 14px 24px rgba(0,0,0,.35)}
-    .bindi{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--accent);
-      border-radius:50%;box-shadow:0 0 8px rgba(230,57,70,.4)}
-    .eye{position:absolute;top:52%;width:14%;height:10px;background:#111;border-radius:10px;transform-origin:center}
-    .eye.left{left:33%}.eye.right{right:33%}
-    .blink{animation:blink 6s infinite}
-    @keyframes blink{0%,48%,52%,100%{transform:scaleY(1)}50%{transform:scaleY(.1)}}
-    .mouth{position:absolute;top:68%;left:50%;transform:translateX(-50%);width:26%;height:16px;background:#7d1b2a;
-      border-radius:0 0 14px 14px/0 0 12px 12px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);transition:height .08s,border-radius .08s}
-    .mouth.open{height:34px;border-radius:0 0 18px 18px/0 0 16px 16px}
-    .necklace{position:absolute;top:82%;left:50%;transform:translateX(-50%);width:48%;height:10px;border-radius:10px;
-      background:radial-gradient(circle at 10% 50%,#ffd36d,#e2a900 60%,#9b6b00);box-shadow:0 4px 8px rgba(0,0,0,.25)}
-    .controls{display:grid;gap:10px;grid-template-columns:1fr 1fr}
-    .controls>*{width:100%}
-    select,textarea,button{background:#0f1733;color:var(--text);border:1px solid var(--glass);border-radius:12px;padding:10px 12px;font-size:.95rem}
-    textarea{grid-column:1/-1;min-height:90px;resize:vertical}
-    button{cursor:pointer;font-weight:600}
-    .primary{background:linear-gradient(90deg,#3d66ff,#7aa2ff);border:none}
-    .ghost{background:transparent}
-    .presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-    .preset{font-size:.8rem;padding:6px 10px;border-radius:999px;border:1px solid var(--glass);background:#0f1733;cursor:pointer}
-    footer{opacity:.8;font-size:.85rem;text-align:center;padding:10px 0 18px}
-    .muted{color:#a8b5d9}
-    .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-    .brand img{height:26px}
-    @media (min-width:540px){.avatar-panel{height:68vh}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sakhi Voice</title>
+<meta name="description" content="Sakhi Voice — multilingual pseudo lip-sync with mic (single file)" />
+<link rel="icon" href="./Sakhi_logo.png" />
+<style>
+  :root { --bg:#0b1020; --panel:#0f1733; --text:#e9eef9; --muted:#a8b5d9; --glass:rgba(255,255,255,.10); --accent:#e63946; }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:radial-gradient(80% 80% at 50% 20%, #16224b 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+  }
+  .wrap{min-height:100dvh;display:flex;flex-direction:column;gap:12px;padding:14px;max-width:620px;margin:0 auto}
+  .card{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+        border:1px solid var(--glass);border-radius:18px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,.35)}
+  header{display:flex;align-items:center;gap:10px;padding-top:6px}
+  header img{height:28px;width:auto;border-radius:6px}
+  header h1{font-size:1.1rem;margin:0;font-weight:650;letter-spacing:.2px}
+  /* Avatar panel */
+  .avatar-panel{display:grid;gap:12px;grid-template-rows:1fr auto}
+  .stage{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--glass);
+         background:linear-gradient(180deg,#24325f 0%,#1a2142 65%,#121a34 100%);display:grid;place-items:center;min-height:260px}
+  .avatar{width:min(92%,420px);aspect-ratio:9/16;border-radius:20px;position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.06);
+          background:linear-gradient(160deg,#ffe8f0 0%,#ffd8e8 40%,#fbd2e8 60%,#ffdfe8 100%)}
+  .saree{position:absolute;bottom:-10%;left:50%;transform:translateX(-50%);width:130%;height:62%;
+         background:radial-gradient(60% 40% at 50% 10%,rgba(255,255,255,.45),rgba(255,255,255,0) 60%),
+         linear-gradient(100deg,#c8005a,#ff2a7f 40%,#ff5b9d 70%,#ff7fb4);
+         clip-path:polygon(10% 0%,90% 0%,100% 35%,84% 100%,16% 100%,0% 35%);filter:drop-shadow(0 10px 14px rgba(200,0,60,.35))}
+  .head{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:62%;aspect-ratio:1/1.1;background:#f7d2c6;
+        border-radius:50% 50% 42% 42%/48% 48% 52% 52%;box-shadow:0 6px 0 rgba(200,120,120,.25) inset}
+  .hair{position:absolute;inset:-6% -6% 40% -6%;background:#2a1a17;border-bottom-left-radius:60% 50%;border-bottom-right-radius:60% 50%;
+        box-shadow:0 14px 24px rgba(0,0,0,.35)}
+  .bindi{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--accent);
+         border-radius:50%;box-shadow:0 0 8px rgba(230,57,70,.4)}
+  .eye{position:absolute;top:52%;width:14%;height:10px;background:#111;border-radius:10px;transform-origin:center}
+  .eye.left{left:33%}.eye.right{right:33%}
+  .blink{animation:blink 6s infinite}
+  @keyframes blink{0%,48%,52%,100%{transform:scaleY(1)}50%{transform:scaleY(.1)}}
+  .mouth{position:absolute;top:68%;left:50%;transform:translateX(-50%);width:26%;height:16px;background:#7d1b2a;
+         border-radius:0 0 14px 14px/0 0 12px 12px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);transition:height .08s,border-radius .08s}
+  .mouth.open{height:34px;border-radius:0 0 18px 18px/0 0 16px 16px}
+  .necklace{position:absolute;top:82%;left:50%;transform:translateX(-50%);width:48%;height:10px;border-radius:10px;
+            background:radial-gradient(circle at 10% 50%,#ffd36d,#e2a900 60%,#9b6b00);box-shadow:0 4px 8px rgba(0,0,0,.25)}
+  /* Controls */
+  .controls{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+  select,textarea,button{
+    background:var(--panel);color:var(--text);border:1px solid var(--glass);border-radius:12px;padding:10px 12px;font-size:.95rem
+  }
+  textarea{grid-column:1/-1;min-height:90px;resize:vertical}
+  .row{display:flex;gap:10px}
+  .primary{background:linear-gradient(90deg,#3d66ff,#7aa2ff);border:none;font-weight:700}
+  .ghost{background:transparent}
+  .toggle{display:flex;align-items:center;gap:8px;justify-content:center}
+  .led{width:10px;height:10px;border-radius:50%;background:#555;border:1px solid #333}
+  .led.live{background:#1dd75b;box-shadow:0 0 10px rgba(29,215,91,.7)}
+  .muted{color:var(--muted)}
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .preset{font-size:.8rem;padding:6px 10px;border-radius:999px;border:1px solid var(--glass);background:var(--panel);cursor:pointer}
+  @media (min-width:540px){.avatar-panel{height:68vh}}
+</style>
 </head>
 <body>
   <div class="wrap" aria-live="polite">
     <header class="card">
-      <div class="brand">
-        <img src="./JIo_logo.png" alt="Jio logo" />
-        <img src="./Sakhi_logo.png" alt="Sakhi logo" />
-      </div>
+      <img src="./JIo_logo.png" alt="Jio logo" />
+      <img src="./Sakhi_logo.png" alt="Sakhi logo" />
       <h1>Sakhi Voice — Multilingual</h1>
     </header>
 
@@ -98,108 +104,192 @@
 
         <select id="voice"></select>
 
-        <textarea id="text" placeholder="Type a message for Sakhi to speak…">
-Namaste! I am Sakhi — your multilingual assistant. How can I help you today?
-        </textarea>
+        <textarea id="text" placeholder="Type a message for Sakhi to speak…">Namaste! I am HR Sakhi — your multilingual assistant. How can I help you today?</textarea>
 
-        <button class="primary" id="speakBtn">▶️ Speak</button>
-        <button class="ghost" id="stopBtn">⏹ Stop</button>
+        <div class="row" style="grid-column:1/-1">
+          <button class="primary" id="speakBtn">▶️ Speak</button>
+          <button class="ghost" id="stopBtn">⏹ Stop</button>
+
+          <button class="ghost toggle" id="micBtn" style="margin-left:auto;">
+            🎙️ <span id="micLabel">Mic</span>
+            <span id="led" class="led" aria-label="mic status"></span>
+          </button>
+        </div>
 
         <div class="presets" id="presets" style="grid-column:1/-1;"></div>
+        <div class="muted" id="status" style="grid-column:1/-1;">Tip: Click 🎙️ Mic and allow permission to speak to HR Sakhi.</div>
       </div>
     </section>
 
-    <footer>
-      <div class="muted">© 2025 • Sakhi Voice • Demo only · Uses browser speech (no server)</div>
-    </footer>
+    <footer class="muted">© 2025 • Sakhi Voice • Demo only · Uses browser speech (no server)</footer>
   </div>
 
 <script>
-  // ---- TTS + pseudo lip-sync ----
+  // ------------------ TTS (speechSynthesis) + pseudo lip-sync ------------------
   const synth = window.speechSynthesis;
   const langSel = document.getElementById('lang');
   const voiceSel = document.getElementById('voice');
-  const textEl = document.getElementById('text');
-  const speakBtn = document.getElementById('speakBtn');
+  const textEl  = document.getElementById('text');
+  const speakBtn= document.getElementById('speakBtn');
   const stopBtn = document.getElementById('stopBtn');
-  const mouth = document.getElementById('mouth');
+  const mouth   = document.getElementById('mouth');
   const presetsEl = document.getElementById('presets');
+  const statusEl  = document.getElementById('status');
 
   let voices = [];
   let flapTimer = null;
 
   const SAMPLE_LINES = {
-    "en-IN": "Hello! I am Sakhi. How can I help you today?",
-    "hi-IN": "नमस्ते! मैं सखी हूँ। मैं आपकी किस तरह सहायता कर सकती हूँ?",
-    "kn-IN": "ನಮಸ್ತೆ! ನಾನು ಸಖಿ. ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
-    "mr-IN": "नमस्कार! मी सखी आहे. मी तुम्हाला कशी मदत करू?",
-    "ta-IN": "வணக்கம்! நான் சகி. உங்களுக்கு எப்படி உதவலாம்?",
-    "te-IN": "నమస్తే! నేను సఖి. మీకు ఎలా సహాయం చేయగలను?",
-    "ml-IN": "നമസ്‌കരം! ഞാൻ സഖി. ഞാൻ എങ്ങനെ സഹായിക്കാം?",
-    "gu-IN": "નમસ્તે! હું સખી છું. હું તમારી કેવી રીતે મદદ કરી શકું?",
-    "bn-IN": "নমস্কার! আমি সখী। আমি কীভাবে সাহায্য করতে পারি?",
-    "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਸਖੀ ਹਾਂ। ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦੀ ਹਾਂ?"
+    "en-IN": "Hello! I am HR Sakhi. How can I help you today?",
+    "hi-IN": "नमस्ते! मैं एचआर सखी हूँ। मैं आपकी किस तरह सहायता कर सकती हूँ?",
+    "kn-IN": "ನಮಸ್ತೆ! ನಾನು HR ಸಖಿ. ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "mr-IN": "नमस्कार! मी HR सखी आहे. मी तुम्हाला कशी मदत करू?",
+    "ta-IN": "வணக்கம்! நான் HR சகி. உங்களுக்கு எப்படி உதவலாம்?",
+    "te-IN": "నమస్తే! నేను HR సఖి. మీకు ఎలా సహాయం చేయగలను?",
+    "ml-IN": "നമസ്‌കാരം! ഞാൻ HR സഖി. ഞാൻ എങ്ങനെ സഹായിക്കാം?",
+    "gu-IN": "નમસ્તે! હું HR સખી છું. હું કેવી રીતે મદદ કરી શકું?",
+    "bn-IN": "নমস্কার! আমি এইচআর সখী। আমি কীভাবে সাহায্য করতে পারি?",
+    "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਐਚਆਰ ਸਖੀ ਹਾਂ। ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦੀ ਹਾਂ?"
   };
 
-  function buildPresets() {
-    presetsEl.innerHTML = '';
-    Object.entries(SAMPLE_LINES).forEach(([k, v]) => {
-      const btn = document.createElement('button');
-      btn.className = 'preset';
-      btn.textContent = k;
-      btn.title = v;
-      btn.onclick = () => { langSel.value = k; populateVoices(); textEl.value = v; };
-      presetsEl.appendChild(btn);
+  const FEMALE_HINTS = ["female","zira","sonia","priya","meera","neural","arfa","heera","ananya","raveena","susan","zira","zaira"];
+
+  function buildPresets(){
+    presetsEl.innerHTML='';
+    Object.entries(SAMPLE_LINES).forEach(([k,v])=>{
+      const b=document.createElement('button');
+      b.className='preset'; b.textContent=k; b.title=v;
+      b.onclick=()=>{ langSel.value=k; populateVoices(); textEl.value=v; };
+      presetsEl.appendChild(b);
     });
   }
 
-  function loadVoices() {
+  function loadVoices(){
     voices = synth.getVoices();
     populateVoices();
   }
-  function populateVoices() {
+
+  function preferFemale(list){
+    // pick first voice whose name hints at female; else first in list
+    const hit = list.find(v => FEMALE_HINTS.some(h => (v.name||"").toLowerCase().includes(h)));
+    return hit || list[0];
+  }
+
+  function populateVoices(){
     const lang = langSel.value.toLowerCase();
-    voiceSel.innerHTML = '';
+    voiceSel.innerHTML='';
     const primary = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang));
-    const fallback = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.split('-')[0]));
+    const fallback= voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.split('-')[0]));
     const finalList = primary.length ? primary : (fallback.length ? fallback : voices);
-    finalList.forEach((v, i) => {
-      const opt = document.createElement('option');
-      opt.value = v.name; opt.textContent = `${v.name} — ${v.lang}`;
-      if (i === 0) opt.selected = true;
+
+    finalList.forEach((v,i)=>{
+      const opt=document.createElement('option');
+      opt.value=v.name; opt.textContent=`${v.name} — ${v.lang}`;
       voiceSel.appendChild(opt);
     });
+    // auto-select a female-ish voice if available
+    if (finalList.length){
+      const fav = preferFemale(finalList);
+      voiceSel.value = fav.name;
+    }
   }
+
   speechSynthesis.onvoiceschanged = loadVoices;
   if (!voices.length) setTimeout(loadVoices, 80);
 
-  function startFlap(){ if (flapTimer) clearInterval(flapTimer); flapTimer=setInterval(()=>mouth.classList.toggle('open'),90); }
+  function startFlap(){ if (flapTimer) clearInterval(flapTimer); flapTimer=setInterval(()=>mouth.classList.toggle('open'), 90); }
   function stopFlap(){ if (flapTimer) clearInterval(flapTimer); mouth.classList.remove('open'); }
 
-  function speak(){
-    const text = (textEl.value||'').trim(); if (!text) return;
+  function speak(text){
+    const t = (text ?? textEl.value ?? "").trim(); if (!t) return;
     if (synth.speaking) synth.cancel();
 
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = langSel.value;
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = langSel.value;
+
     const chosen = voices.find(v => v.name === voiceSel.value);
-    if (chosen) utter.voice = chosen;
-    utter.rate = 0.95; utter.pitch = 1.0;
+    if (chosen) u.voice = chosen;
 
-    utter.onboundary = () => { mouth.classList.add('open'); setTimeout(()=>mouth.classList.remove('open'), 60); };
-    utter.onstart = startFlap;
-    utter.onend = stopFlap;
-    utter.onerror = stopFlap;
+    u.rate = 0.95; u.pitch = 1.0;
 
-    synth.speak(utter);
+    u.onboundary = () => { mouth.classList.add('open'); setTimeout(()=>mouth.classList.remove('open'), 60); };
+    u.onstart = startFlap;
+    u.onend   = stopFlap;
+    u.onerror = stopFlap;
+
+    synth.speak(u);
   }
-  function stop(){ if (synth.speaking) synth.cancel(); stopFlap(); }
 
-  speakBtn.addEventListener('click', speak);
-  stopBtn.addEventListener('click', stop);
-  langSel.addEventListener('change', () => { populateVoices(); textEl.value = SAMPLE_LINES[langSel.value] || textEl.value; });
+  speakBtn.addEventListener('click', ()=>speak());
+  stopBtn.addEventListener('click', ()=>{ if (synth.speaking) synth.cancel(); stopFlap(); });
+  langSel.addEventListener('change', ()=>{ populateVoices(); textEl.value = SAMPLE_LINES[langSel.value] || textEl.value; });
 
+  // ------------------ Mic (SpeechRecognition) ------------------
+  const led = document.getElementById('led');
+  const micBtn = document.getElementById('micBtn');
+  const micLabel = document.getElementById('micLabel');
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = SR ? new SR() : null;
+  let listening = false;
+
+  if (rec){
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.lang = 'en-IN';
+
+    rec.onstart = ()=>{ listening = true; led.classList.add('live'); micLabel.textContent='Listening…'; statusEl.textContent='Listening… speak now'; };
+    rec.onend   = ()=>{ listening = false; led.classList.remove('live'); micLabel.textContent='Mic'; };
+    rec.onerror = (e)=>{ statusEl.textContent = 'Mic error: ' + (e.error || 'Unknown'); listening=false; led.classList.remove('live'); micLabel.textContent='Mic'; };
+
+    rec.onresult = (e)=>{
+      const txt = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '';
+      statusEl.textContent = 'You said: ' + txt;
+      const reply = hrReply(txt);
+      // Speak back in the selected language (default en-IN)
+      speak(reply);
+    };
+  } else {
+    micBtn.disabled = true;
+    statusEl.textContent = 'Mic not supported in this browser. Use Chrome on desktop/mobile.';
+  }
+
+  micBtn.addEventListener('click', ()=>{
+    if (!rec) return;
+    if (listening){ rec.stop(); return; }
+    // keep recognition language aligned with dropdown where possible
+    rec.lang = (langSel.value || 'en-IN');
+    try { rec.start(); }
+    catch(e){ /* some browsers throw if already started */ }
+  });
+
+  // ------------------ Simple HR reply logic ------------------
+  function hrReply(q){
+    const s = (q||'').toLowerCase();
+
+    if (s.includes('leave') || s.includes('vacation') || s.includes('holiday')){
+      return 'HR Sakhi: You can apply for leave in the myHR portal. For emergencies, please inform your manager and submit the request within 24 hours.';
+    }
+    if (s.includes('policy') || s.includes('policies')){
+      return 'HR Sakhi: Our latest HR policies are in the Policy Hub. Would you like the link emailed to you?';
+    }
+    if (s.includes('benefit') || s.includes('insurance') || s.includes('medical')){
+      return 'HR Sakhi: Core benefits include health insurance for you and dependents, accident cover, and wellness support. For plan details, open the Benefits section.';
+    }
+    if (s.includes('salary') || s.includes('payslip')){
+      return 'HR Sakhi: Payslips are available on the Payroll page on the last business day of each month.';
+    }
+    if (s.includes('hello') || s.includes('hi') || s.includes('namaste')){
+      return 'Hello! I am HR Sakhi. How can I help you today?';
+    }
+    // fallback: echo
+    return 'HR Sakhi: I heard "' + q + '". I can help with leave, policies, benefits, or payroll.';
+  }
+
+  // init
   buildPresets();
+  // greet once on load (optional)
+  setTimeout(()=>speak('Hello! I am HR Sakhi. Tap the mic to talk to me.'), 600);
 </script>
 </body>
 </html>

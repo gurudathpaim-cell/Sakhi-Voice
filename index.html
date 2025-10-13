@@ -1,394 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sakhi Voice</title>
-<meta name="description" content="Sakhi Voice — photo avatar with pseudo lip-sync, splash logos, floating mic, multilingual TTS" />
+<title>Sakhi Voice — HR Assistant</title>
 <link rel="icon" href="./Sakhi_logo.png" />
 <style>
-  :root{--bg:#0b1020;--panel:#0f1733;--text:#e9eef9;--muted:#a8b5d9;--glass:rgba(255,255,255,.10);--accent:#e63946}
-  *{box-sizing:border-box} html,body{height:100%}
-  body{margin:0;background:radial-gradient(80% 80% at 50% 20%, #16224b 0%, var(--bg) 55%);color:var(--text);
-       font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  :root{
+    --bg1:#16224b; --bg2:#0b1020; --glass:rgba(255,255,255,.12);
+    /* Mouth fit defaults (you can tweak from the Fit panel) */
+    --mouth-top:62%;         /* % from top of avatar */
+    --mouth-width:26%;       /* % of avatar width */
+    --mouth-closed:6px;      /* height when closed */
+    --mouth-open:18px;       /* height when open */
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+    background:radial-gradient(circle at 50% -20%, var(--bg1), var(--bg2));
+    color:#fff; display:flex; flex-direction:column; align-items:center; min-height:100vh;
+  }
+  header{
+    width:100%; display:flex; justify-content:center; align-items:center; gap:10px; padding:10px 12px;
+  }
+  header img{height:32px}
+  h2{margin:0}
 
-  /* Splash: Jio → Sakhi */
-  .splash{position:fixed;inset:0;display:grid;place-items:center;background:#000;z-index:9999;transition:opacity .6s ease}
-  .splash-inner{display:flex;flex-direction:column;align-items:center;gap:24px}
-  .splash img{width:160px;height:auto;opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
-  .splash img.show{opacity:1;transform:translateY(0)}
-
-  .wrap{min-height:100dvh;display:flex;flex-direction:column;gap:12px;padding:14px;max-width:680px;margin:0 auto}
-  .card{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--glass);
-        border-radius:18px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,.35)}
-  header{display:flex;align-items:center;gap:10px;padding-top:6px}
-  header img{height:28px;width:auto;border-radius:6px}
-  header h1{font-size:1.1rem;margin:0;font-weight:650;letter-spacing:.2px}
-
-  /* Avatar panel */
-  .avatar-panel{display:grid;gap:12px;grid-template-rows:auto auto}
-  .stage{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--glass);
-         background:linear-gradient(180deg,#24325f 0%,#1a2142 65%,#121a34 100%);display:grid;place-items:center;min-height:360px}
-  .avatar.photo{position:relative;width:min(92%,520px);aspect-ratio:3/4;border-radius:18px;overflow:hidden;border:1px solid rgba(0,0,0,.06)}
-  .avatar.photo .face{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
-  .avatar.photo::after{content:"";position:absolute;inset:auto 0 0 0;height:35%;
-    background:linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,.10) 60%, rgba(0,0,0,.18) 100%)}
-
-  /* Mouth overlay (adjustable via sliders, saved per-device) */
+  /* Avatar */
+  .avatar{
+    position:relative; width:min(70vw,260px); height:min(70vw,260px);
+    border-radius:50%; overflow:hidden; margin-top:24px;
+    box-shadow:0 10px 26px rgba(0,0,0,.35), 0 0 20px rgba(255,255,255,.12) inset;
+    border:1px solid var(--glass);
+    background:#0b1020;
+  }
+  .avatar img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+  /* subtle chin shading to help the mouth blend */
+  .avatar::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:36%;
+    background:linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,.10) 60%, rgba(0,0,0,.18) 100%);
+    pointer-events:none;
+  }
+  /* Mouth overlay */
   .mouth{
     position:absolute; left:50%; transform:translateX(-50%);
-    width:var(--mw,16%); height:var(--mh,10px); top:var(--mtop,46%);
-    background:#6d1b2a; border-radius:18px; box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);
-    transition:height .08s ease; mix-blend-mode:multiply;
+    top:var(--mouth-top);
+    width:var(--mouth-width);
+    height:var(--mouth-closed);
+    background:#6d1b2a; border-radius:18px;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);
+    transition:height .08s ease;
+    mix-blend-mode:multiply;
   }
-  .mouth.open{ height:calc(var(--mh-open,24px)); }
+  .mouth.open{ height:var(--mouth-open); }
 
-  /* Controls */
-  .controls{display:grid;gap:10px;grid-template-columns:1fr 1fr}
-  select,textarea,button{background:var(--panel);color:var(--text);border:1px solid var(--glass);border-radius:12px;padding:10px 12px;font-size:.95rem}
-  textarea{grid-column:1/-1;min-height:90px;resize:vertical}
-  .primary{background:linear-gradient(90deg,#3d66ff,#7aa2ff);border:none;font-weight:700}
-  .ghost{background:transparent}
-  .presets{display:flex;flex-wrap:wrap;gap:8px}
-  .preset{font-size:.8rem;padding:6px 10px;border-radius:999px;border:1px solid var(--glass);background:var(--panel);cursor:pointer}
-  .muted{color:var(--muted)}
-
-  /* Fit tool */
-  details.fit{grid-column:1/-1;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.12);border-radius:12px;padding:10px}
-  .fit .row{display:flex;gap:10px;align-items:center}
-  .fit label{font-size:.8rem;color:var(--muted);width:70px}
-  .fit input[type="range"]{width:100%}
-  .fit small{color:var(--muted)}
-
-  /* Floating mic button + meter */
-  .micFab{
-    position:fixed; right:16px; bottom:16px; z-index:9998;
-    display:flex; align-items:center; gap:10px;
-    padding:10px 14px; border-radius:999px; border:1px solid var(--glass);
-    background:rgba(15,23,51,.85); backdrop-filter:blur(6px);
-    box-shadow:0 8px 24px rgba(0,0,0,.35)
+  #response{
+    margin:18px 12px 6px; max-width:92%; text-align:center; line-height:1.4;
   }
-  .micFab button{
-    background:transparent; color:var(--text); border:1px solid var(--glass);
-    border-radius:999px; padding:8px 12px; font-weight:700; cursor:pointer
+  .btns{display:flex; gap:10px; margin:8px 0 12px}
+  button{
+    padding:10px 16px; border:none; border-radius:10px; font-weight:600; cursor:pointer; color:#fff;
   }
-  .micFab button.on{ border-color:#1dd75b; box-shadow:0 0 0 2px rgba(29,215,91,.25) inset }
-  #micMeter{ width:74px; height:12px; background:#0b1020; border:1px solid var(--glass); border-radius:20px }
-  @media (max-width:480px){ .micFab{ right:12px; bottom:12px } }
+  #speakBtn{ background:#4da3ff }
+  #stopBtn { background:#3a3a3a }
+
+  /* Floating mic */
+  #micBtn{
+    position:fixed; right:16px; bottom:16px; width:62px; height:62px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+    color:#fff; background:#4da3ff; border:none; cursor:pointer;
+    box-shadow:0 8px 24px rgba(0,0,0,.35), 0 0 14px rgba(77,163,255,.5);
+  }
+  #micBtn.on{ background:#00c851; box-shadow:0 8px 24px rgba(0,0,0,.35), 0 0 14px rgba(0,200,81,.6) }
+
+  /* Fit mouth panel */
+  details.fit{ margin:8px 12px 20px; width:min(680px,95%); background:rgba(255,255,255,.04);
+    border:1px dashed var(--glass); border-radius:12px; padding:10px 12px; }
+  .fit .row{ display:flex; align-items:center; gap:10px; margin:6px 0 }
+  .fit label{ width:90px; font-size:.9rem; color:#cbd5ff }
+  .fit input[type="range"]{ flex:1 }
+  .muted{ color:#a8b5d9; font-size:.9rem }
 </style>
 </head>
 <body>
-  <!-- Splash: Jio → Sakhi -->
-  <div class="splash" id="splash">
-    <div class="splash-inner">
-      <img id="logo-jio" src="./JIo_logo.png" alt="Jio" />
-      <img id="logo-sakhi" src="./Sakhi_logo.png" alt="Sakhi" />
+  <header>
+    <img src="./JIo_logo.png" alt="Jio">
+    <img src="./Sakhi_logo.png" alt="Sakhi">
+    <h2>HR Sakhi</h2>
+  </header>
+
+  <div class="avatar" id="avatar">
+    <img src="./sakhi-photo.jpg" alt="Deepa – HR Sakhi">
+    <div id="mouth" class="mouth"></div>
+  </div>
+
+  <p id="response">Namaste! I am Deepa, your HR Sakhi. How can I help you with maternity and E S I C today?</p>
+
+  <div class="btns">
+    <button id="speakBtn">🔊 Speak</button>
+    <button id="stopBtn">⏹ Stop</button>
+  </div>
+
+  <details class="fit">
+    <summary>Fit mouth</summary>
+    <div class="row"><label>Top</label>   <input id="rTop"   type="range" min="50" max="75" step="0.1"><span id="vTop"  class="muted"></span></div>
+    <div class="row"><label>Width</label> <input id="rW"     type="range" min="16" max="40" step="0.1"><span id="vW"    class="muted"></span></div>
+    <div class="row"><label>Closed</label><input id="rC"     type="range" min="4"  max="14" step="1"><span  id="vC"    class="muted"></span></div>
+    <div class="row"><label>Open</label>  <input id="rO"     type="range" min="12" max="28" step="1"><span  id="vO"    class="muted"></span></div>
+    <div class="row">
+      <button id="saveFit" style="background:#4da3ff">Save</button>
+      <button id="resetFit" style="background:#3a3a3a">Reset</button>
     </div>
-  </div>
+    <div class="muted">Saved per-device in your browser.</div>
+  </details>
 
-  <div class="wrap" aria-live="polite">
-    <header class="card">
-      <img src="./JIo_logo.png" alt="Jio" />
-      <img src="./Sakhi_logo.png" alt="Sakhi" />
-      <h1>Sakhi Voice — Multilingual</h1>
-    </header>
-
-    <section class="card avatar-panel">
-      <div class="stage">
-        <div class="avatar photo" id="avatar">
-          <img class="face" src="./sakhi-photo.jpg" alt="HR Sakhi" />
-          <div id="mouth" class="mouth"></div>
-        </div>
-      </div>
-
-      <div class="controls">
-        <select id="lang">
-          <option value="en-IN" selected>English (India)</option>
-          <option value="hi-IN">Hindi (हिंदी)</option>
-          <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
-          <option value="mr-IN">Marathi (मराठी)</option>
-          <option value="ta-IN">Tamil (தமிழ்)</option>
-          <option value="te-IN">Telugu (తెలుగు)</option>
-          <option value="ml-IN">Malayalam (മലയാളം)</option>
-          <option value="gu-IN">Gujarati (ગુજરાતી)</option>
-          <option value="bn-IN">Bengali (বাংলা)</option>
-          <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
-        </select>
-
-        <select id="voice"></select>
-
-        <textarea id="text">Hi Deepa! I am HR Sakhi. How can I help you with maternity and E S I C today?</textarea>
-
-        <button class="primary" id="speakBtn">▶️ Speak</button>
-        <button class="ghost" id="stopBtn">⏹ Stop</button>
-
-        <div class="presets" id="presets" style="grid-column:1/-1;margin-top:6px;"></div>
-        <div class="muted" id="status" style="grid-column:1/-1;">Tip: Allow mic if prompted. The floating pill shows live input level.</div>
-
-        <details class="fit">
-          <summary>Adjust mouth fit</summary>
-          <div class="row"><label>Top</label><input id="mtop" type="range" min="30" max="70" step="0.1"><small id="mtopv"></small></div>
-          <div class="row"><label>Width</label><input id="mwidth" type="range" min="8" max="26" step="0.1"><small id="mwidthv"></small></div>
-          <div class="row"><label>Closed</label><input id="mh" type="range" min="6" max="18" step="1"><small id="mhv"></small></div>
-          <div class="row"><label>Open</label><input id="mhop" type="range" min="14" max="34" step="1"><small id="mhopv"></small></div>
-          <div class="row"><button id="saveFit" class="primary">Save</button><button id="resetFit" class="ghost">Reset</button></div>
-          <small>Saved per-device in your browser.</small>
-        </details>
-      </div>
-    </section>
-
-    <footer class="muted">© 2025 • Sakhi Voice • Demo only · Uses browser speech (no server)</footer>
-  </div>
-
-  <!-- Floating mic toggle + level meter -->
-  <div class="micFab" role="group" aria-label="Microphone controls">
-    <canvas id="micMeter" width="74" height="12" aria-hidden="true"></canvas>
-    <button id="micToggle" title="Mic On/Off">🎙️ Mic</button>
-  </div>
+  <button id="micBtn" class="on" title="Mic on/off">🎙️</button>
 
 <script>
-  /* ================= Splash: Jio → Sakhi ================= */
-  const splash = document.getElementById('splash');
-  const jio = document.getElementById('logo-jio');
-  const sakhi = document.getElementById('logo-sakhi');
-  setTimeout(()=> jio.classList.add('show'), 120);
-  setTimeout(()=> { jio.classList.remove('show'); sakhi.classList.add('show'); }, 1500);
-  setTimeout(()=> { splash.style.opacity = 0; setTimeout(()=> splash.style.display='none', 600); }, 2800);
-
-  /* ================= TTS + pseudo lip-sync ================= */
+  /* ================= Speech Synthesis helpers ================= */
   const synth = window.speechSynthesis;
-  const langSel = document.getElementById('lang');
-  const voiceSel = document.getElementById('voice');
-  const textEl  = document.getElementById('text');
-  const speakBtn= document.getElementById('speakBtn');
-  const stopBtn = document.getElementById('stopBtn');
-  const mouth   = document.getElementById('mouth');
-  const presetsEl = document.getElementById('presets');
-  const statusEl  = document.getElementById('status');
+  function ensureVoices(cb){ if(synth.getVoices().length) cb(); else speechSynthesis.onvoiceschanged = cb; }
 
-  let voices = [];
-  let flapTimer = null;
-
-  // Presets (10 languages). English mentions E S I C as letters.
-  const SAMPLE_LINES = {
-    "en-IN":"Hi Deepa! I am HR Sakhi. How can I help you with maternity and E S I C today?",
-    "hi-IN":"नमस्ते दीपा! मैं एचआर सखी हूँ। मातृत्व और ई  एस  आई  सी संबंधी आपकी कैसे मदद कर सकती हूँ?",
-    "kn-IN":"ನಮಸ್ತೆ ದೀಪಾ! ನಾನು HR ಸಖಿ. ಮೆಟರ್ನಿಟಿ ಮತ್ತು E  S  I  C ಬಗ್ಗೆ ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
-    "mr-IN":"नमस्कार दीपा! मी HR सखी आहे. मातृत्व आणि E  S  I  C संदर्भात मी कशी मदत करू?",
-    "ta-IN":"வணக்கம் தீபா! நான் HR சகி. Maternity மற்றும் E  S  I  C குறித்து எப்படி உதவலாம்?",
-    "te-IN":"నమస్తే దీపా! నేను HR సఖి. మేటర్నిటీ మరియు E  S  I  C విషయాల్లో నేను ఎలా సహాయం చేయగలను?",
-    "ml-IN":"നമസ്‌കാരം ദീപാ! ഞാൻ HR സഖി. മാതൃത്വവും E  S  I  C വിഷയങ്ങളും സംബന്ധിച്ച് എങ്ങനെ സഹായിക്കാം?",
-    "gu-IN":"નમસ્તે દીપા! હું HR સખી છું. મેટરનિટી અને E  S  I  C বিষয়ে હું કેવી રીતે મદદ કરી શકું?",
-    "bn-IN":"নমস্কার দীপা! আমি এইচআর সখী। মাতৃত্ব এবং E  S  I  C বিষয়ে আমি কীভাবে সাহায্য করতে পারি?",
-    "pa-IN":"ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਦੀਪਾ! ਮੈਂ HR ਸਖੀ ਹਾਂ। ਮਾਤਰਤਵ ਅਤੇ E  S  I  C ਬਾਰੇ ਮੈਂ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦੀ ਹਾਂ?"
-  };
-
-  // Prefer female EN-IN voices if available
-  const FEMALE_HINTS=["female","zira","sonia","priya","aditi","meera","neural","susan","zaira","ananya","heli","asha","revathi","lakshmi"];
-
-  function buildPresets(){
-    presetsEl.innerHTML='';
-    Object.entries(SAMPLE_LINES).forEach(([k,v])=>{
-      const b=document.createElement('button');
-      b.className='preset'; b.textContent=k; b.title=v;
-      b.onclick=()=>{ langSel.value=k; populateVoices(); textEl.value=v; };
-      presetsEl.appendChild(b);
-    });
+  // Prefer Microsoft Neerja (en-IN), else any en-IN female-ish, else first
+  function pickIndianFemale(){
+    const voices = synth.getVoices();
+    const neerja = voices.find(v => (v.name||'').toLowerCase().includes('neerja') && (v.lang||'').toLowerCase().startsWith('en-in'));
+    if(neerja) return neerja;
+    const enIn = voices.filter(v => (v.lang||'').toLowerCase().startsWith('en-in'));
+    const femaleHint = ['female','neural','aditi','priya','meera','ananya','sonia','zara','asha','lakshmi','revathi'];
+    const female = enIn.find(v => femaleHint.some(h => (v.name||'').toLowerCase().includes(h)));
+    return female || enIn[0] || voices[0] || null;
   }
 
-  function loadVoices(){ voices = synth.getVoices(); populateVoices(); }
-  function preferFemale(list){
-    const enHint = list.find(v => (v.lang||'').toLowerCase().startsWith('en-in') && FEMALE_HINTS.some(h=>(v.name||'').toLowerCase().includes(h)));
-    if(enHint) return enHint;
-    const anyFemale = list.find(v => FEMALE_HINTS.some(h=>(v.name||'').toLowerCase().includes(h)));
-    return anyFemale || list[0];
-  }
-  function populateVoices(){
-    const lang=langSel.value.toLowerCase();
-    voiceSel.innerHTML='';
-    const primary=voices.filter(v=>v.lang && v.lang.toLowerCase().startsWith(lang));
-    const fallback=voices.filter(v=>v.lang && v.lang.toLowerCase().startsWith(lang.split('-')[0]));
-    const finalList=primary.length?primary:(fallback.length?fallback:voices);
-    finalList.forEach(v=>{
-      const opt=document.createElement('option'); opt.value=v.name; opt.textContent=`${v.name} — ${v.lang}`; voiceSel.appendChild(opt);
-    });
-    if(finalList.length){ voiceSel.value = (preferFemale(finalList) || finalList[0]).name; }
-  }
-  speechSynthesis.onvoiceschanged = loadVoices; if(!voices.length)setTimeout(loadVoices,80);
-
-  function startFlap(){ if(flapTimer)clearInterval(flapTimer); flapTimer=setInterval(()=>mouth.classList.toggle('open'), 120); }
-  function stopFlap(){ if(flapTimer)clearInterval(flapTimer); mouth.classList.remove('open'); }
+  function sayESICLetters(text){ return text.replace(/esic/ig,'E S I C').replace(/e\s*s\s*i\s*c/ig,'E S I C'); }
 
   function speak(text){
-    // ensure “E S I C” is said as letters in ANY language by spacing letters in English segments
-    const ensureLetters = (t) => t.replace(/ESIC|E\s*S\s*I\s*C/ig, 'E S I C');
-    const t=(text ?? textEl.value ?? "").trim(); if(!t) return;
-    if(synth.speaking) synth.cancel();
-    const u=new SpeechSynthesisUtterance(ensureLetters(t));
-    u.lang=langSel.value;
-    const chosen=voices.find(v=>v.name===voiceSel.value); if(chosen) u.voice=chosen;
-    // Gentler pace, female-ish pitch
-    u.rate=0.95; u.pitch=1.05;
+    const u = new SpeechSynthesisUtterance(sayESICLetters(text));
+    u.lang = 'en-IN';
+    const v = pickIndianFemale(); if(v) u.voice = v;
+    u.rate = 0.97; u.pitch = 1.05;
 
-    u.onboundary=()=>{ mouth.classList.add('open'); setTimeout(()=>mouth.classList.remove('open'), 70); };
-    u.onstart=startFlap; u.onend=stopFlap; u.onerror=stopFlap;
+    // Pseudo lip-sync
+    const mouth = document.getElementById('mouth');
+    let flap;
+    u.onstart = ()=>{ flap = setInterval(()=> mouth.classList.toggle('open'), 120); };
+    u.onboundary = ()=>{ mouth.classList.add('open'); setTimeout(()=> mouth.classList.remove('open'), 70); };
+    u.onend = ()=>{ clearInterval(flap); mouth.classList.remove('open'); };
+    u.onerror = ()=>{ clearInterval(flap); mouth.classList.remove('open'); };
+
+    synth.cancel(); // stop anything else
     synth.speak(u);
   }
 
-  speakBtn.addEventListener('click',()=>speak());
-  stopBtn.addEventListener('click',()=>{ if(synth.speaking) synth.cancel(); stopFlap(); });
-  langSel.addEventListener('change',()=>{ populateVoices(); textEl.value=SAMPLE_LINES[langSel.value]||textEl.value; });
+  /* ================= UI buttons ================= */
+  const response = document.getElementById('response');
+  document.getElementById('speakBtn').onclick = ()=> speak(response.textContent);
+  document.getElementById('stopBtn').onclick = ()=> synth.cancel();
 
-  /* ================= Floating Mic: toggle + meter + auto-restart recognition ================= */
-  const micBtn = document.getElementById('micToggle');
-  const meterCanvas = document.getElementById('micMeter');
-  const mctx = meterCanvas.getContext('2d');
+  /* ================= Mic: continuous recognition with recovery ================= */
+  const micBtn = document.getElementById('micBtn');
+  let rec, micOn = true, listening = false;
 
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec = SR ? new SR() : null;
-  let micOn = false;      // desired toggle
-  let listening = false;  // SR state
-
-  // Meter
-  let audioCtx, analyser, micSource, rafId;
-  const METER_BG = '#0b1020', METER_FG = '#1dd75b';
-  function drawMeter(level=0){
-    const w=meterCanvas.width, h=meterCanvas.height;
-    mctx.clearRect(0,0,w,h);
-    mctx.fillStyle=METER_BG; mctx.fillRect(0,0,w,h);
-    const barW = Math.max(2, Math.min(w-2, Math.floor(level * (w-2))));
-    mctx.fillStyle=METER_FG; mctx.fillRect(1,1, barW, h-2);
-  }
-  async function startMeter(){
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-      analyser = audioCtx.createAnalyser(); analyser.fftSize=256;
-      const source = audioCtx.createMediaStreamSource(stream);
-      source.connect(analyser); micSource = source;
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const loop = ()=>{
-        analyser.getByteTimeDomainData(data);
-        let sum=0; for(let i=0;i<data.length;i++){ const v=(data[i]-128)/128; sum+=v*v; }
-        const rms = Math.sqrt(sum/data.length); drawMeter(rms* (micOn?1:0.2));
-        rafId = requestAnimationFrame(loop);
-      };
-      loop();
-    }catch(err){
-      statusEl.textContent = 'Mic permission blocked. Click the padlock → Site settings → Microphone → Allow.';
-      drawMeter(0);
-    }
-  }
-  function stopMeter(){
-    if(rafId) cancelAnimationFrame(rafId);
-    try{ if(audioCtx && audioCtx.state!=='closed') audioCtx.close(); }catch{}
-    audioCtx = analyser = micSource = null;
-    drawMeter(0);
-  }
-
-  // SpeechRecognition
-  if(rec){
-    rec.continuous = false;
+  function initRec(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ alert("Speech recognition not supported in this browser."); return; }
+    rec = new SR();
+    rec.lang = 'en-IN';
+    rec.continuous = true;
     rec.interimResults = false;
-    rec.lang = 'en-IN'; // default, we update it when language dropdown changes
-    rec.onstart = ()=>{ listening = true; micBtn.classList.add('on'); micBtn.textContent='🎙️ Mic On'; statusEl.textContent='Listening… speak now'; };
-    rec.onend   = ()=>{ listening = false; micBtn.classList.remove('on'); micBtn.textContent = micOn ? '🎙️ Mic On (restarting)' : '🎙️ Mic Off';
-                        if(micOn){ try{ rec.start(); }catch{} } };
-    rec.onerror = (e)=>{ statusEl.textContent = 'Mic error: ' + (e.error||'Unknown'); };
-    rec.onresult= (e)=>{
-      const txt = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '';
-      statusEl.textContent = 'You said: ' + txt;
-      speak(hrReply(txt));
+    rec.maxAlternatives = 1;
+
+    rec.onstart = ()=>{ listening=true; micBtn.classList.add('on'); };
+    rec.onend   = ()=>{ listening=false; if(micOn) setTimeout(()=>{ try{ rec.start(); }catch{} }, 250); };
+    rec.onerror = (e)=>{ if(['no-speech','audio-capture','network'].includes(e.error)){ if(micOn){ try{ rec.stop(); }catch{} } } };
+    rec.onresult= (ev)=>{
+      const txt = ev.results[ev.results.length-1][0].transcript;
+      response.textContent = "You said: " + txt;
+      replyTo(txt);
     };
-  } else {
-    statusEl.textContent = 'Mic not supported here. Use Chrome.';
-    micBtn.disabled = true;
   }
 
-  function hrReply(q){
-    const s=(q||'').toLowerCase();
+  micBtn.onclick = ()=>{
+    if(!rec) initRec();
+    micOn = !micOn;
+    if(micOn){ micBtn.classList.add('on'); try{ rec.start(); }catch{} }
+    else     { micBtn.classList.remove('on'); try{ rec.stop(); }catch{} }
+  };
 
-    // Ensure ESIC always spoken as letters
-    const sayESIC = 'E S I C';
-
-    if(s.includes('maternity')){
-      return 'HR Sakhi: For maternity benefits, please check your eligibility, handover plan, and apply at least eight weeks in advance. For ' + sayESIC + ' coverage, ensure your IP number is active.';
-    }
-    if(s.includes('e s i c') || s.includes('esic') || s.includes('e.s.i.c')){
-      return 'HR Sakhi: ' + sayESIC + ' is the Employees State Insurance Corporation. I can help you with your IP number, dispensary details, and benefit claims.';
-    }
-    if(s.includes('leave')||s.includes('vacation')||s.includes('holiday')){
-      return 'HR Sakhi: You can apply for leave in the myHR portal. For emergencies, inform your manager and submit within 24 hours.';
-    }
-    if(s.includes('policy')){
-      return 'HR Sakhi: Latest policies are in the Policy Hub. I can send you the link.';
-    }
-    if(s.includes('benefit')||s.includes('insurance')||s.includes('medical')){
-      return 'HR Sakhi: Benefits include health insurance, accident cover, and wellness support. Check the Benefits page for details.';
-    }
-    if(s.includes('salary')||s.includes('payslip')){
-      return 'HR Sakhi: Payslips are available on the Payroll page on the last business day.';
-    }
-    if(s.includes('hello')||s.includes('hi')||s.includes('namaste')){
-      return 'Hello Deepa! I am HR Sakhi. How can I help you today?';
-    }
-    return 'HR Sakhi: I heard "'+q+'". I can help with maternity, ' + sayESIC + ', leave, policies, benefits, or payroll.';
+  function replyTo(q){
+    const s = (q||'').toLowerCase();
+    const ESIC = 'E S I C';
+    let ans =
+      s.includes('maternity') ? `Under ${ESIC}, maternity leave provides twenty six weeks of paid leave and full medical benefits.` :
+      (s.includes('e s i c') || s.includes('esic')) ? `${ESIC} is the Employees State Insurance Corporation. I can help with your IP number, dispensary and claims.` :
+      s.includes('leave') ? `Please raise leave in the myHR portal. For emergencies, inform your manager and submit within twenty four hours.` :
+      `I am your HR Sakhi. Ask me about maternity benefits, ${ESIC}, leave, or policies.`;
+    response.textContent = ans;
+    speak(ans);
   }
 
-  function setRecLangFromUI(){ if(rec) rec.lang = (langSel.value||'en-IN'); }
-  langSel.addEventListener('change', setRecLangFromUI);
+  /* ================= Mouth fit save/load ================= */
+  const avatar = document.getElementById('avatar');
+  const rTop = document.getElementById('rTop'), rW = document.getElementById('rW'), rC = document.getElementById('rC'), rO = document.getElementById('rO');
+  const vTop = document.getElementById('vTop'), vW = document.getElementById('vW'), vC = document.getElementById('vC'), vO = document.getElementById('vO');
+  const saveFit = document.getElementById('saveFit'), resetFit = document.getElementById('resetFit');
 
-  async function toggleMic(force){
-    const target = (typeof force==='boolean') ? force : !micOn;
-    micOn = target;
-    if(micOn){
-      setRecLangFromUI();
-      if(rec && !listening){ try{ rec.start(); }catch{} }
-      await startMeter();
-      micBtn.classList.add('on'); micBtn.textContent='🎙️ Mic On';
-      statusEl.textContent='Mic is ON. Speak to HR Sakhi.';
-    }else{
-      if(rec && listening){ try{ rec.stop(); }catch{} }
-      stopMeter();
-      micBtn.classList.remove('on'); micBtn.textContent='🎙️ Mic Off';
-      statusEl.textContent='Mic is OFF.';
-    }
-  }
-  micBtn.addEventListener('click', ()=>toggleMic());
-
-  // Fit controls (mouth placement)
-  const fitKeys={mtop:'--mtop',mw:'--mw',mh:'--mh',mhop:'--mh-open'};
-  const elTop=document.getElementById('mtop'), elW=document.getElementById('mwidth'), elH=document.getElementById('mh'), elHop=document.getElementById('mhop');
-  const vTop=document.getElementById('mtopv'), vW=document.getElementById('mwidthv'), vH=document.getElementById('mhv'), vHop=document.getElementById('mhopv');
-  const saveBtn=document.getElementById('saveFit'), resetBtn=document.getElementById('resetFit'); const avatar=document.getElementById('avatar');
-
-  function applyFit(topPct,widthPct,closedPx,openPx){
-    avatar.style.setProperty(fitKeys.mtop, topPct+'%');
-    avatar.style.setProperty(fitKeys.mw, widthPct+'%');
-    avatar.style.setProperty(fitKeys.mh, closedPx+'px');
-    avatar.style.setProperty(fitKeys.mhop, openPx+'px');
-    elTop.value=topPct; elW.value=widthPct; elH.value=closedPx; elHop.value=openPx;
-    vTop.textContent=topPct+'%'; vW.textContent=widthPct+'%'; vH.textContent=closedPx+'px'; vHop.textContent=openPx+'px';
+  function applyFit(t,w,c,o){
+    avatar.style.setProperty('--mouth-top', t+'%');
+    avatar.style.setProperty('--mouth-width', w+'%');
+    avatar.style.setProperty('--mouth-closed', c+'px');
+    avatar.style.setProperty('--mouth-open', o+'px');
+    rTop.value=t; rW.value=w; rC.value=c; rO.value=o;
+    vTop.textContent=t+'%'; vW.textContent=w+'%'; vC.textContent=c+'px'; vO.textContent=o+'px';
   }
   function loadFit(){
-    const d=JSON.parse(localStorage.getItem('sakhi-fit')||'{}');
-    applyFit(d.top??46, d.w??16, d.h??10, d.hop??24);
+    const d = JSON.parse(localStorage.getItem('sakhi-mouth-fit')||'{}');
+    applyFit(d.top ?? 62, d.w ?? 26, d.c ?? 6, d.o ?? 18);
   }
-  saveBtn.onclick=(e)=>{ e.preventDefault();
-    localStorage.setItem('sakhi-fit', JSON.stringify({top:parseFloat(elTop.value), w:parseFloat(elW.value), h:parseInt(elH.value), hop:parseInt(elHop.value)}));
-    statusEl.textContent='Saved mouth fit.';
+  saveFit.onclick = (e)=>{ e.preventDefault();
+    localStorage.setItem('sakhi-mouth-fit', JSON.stringify({top:+rTop.value, w:+rW.value, c:+rC.value, o:+rO.value}));
   };
-  resetBtn.onclick=(e)=>{ e.preventDefault(); localStorage.removeItem('sakhi-fit'); loadFit(); statusEl.textContent='Reset to defaults.'; };
+  resetFit.onclick = (e)=>{ e.preventDefault(); localStorage.removeItem('sakhi-mouth-fit'); loadFit(); };
 
-  // Init sequence
-  buildPresets();
-  loadVoices();
+  rTop.oninput=()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
+  rW.oninput  =()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
+  rC.oninput  =()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
+  rO.oninput  =()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
+
+  /* ================= Init ================= */
+  ensureVoices(()=> speak("Namaste! I am Deepa, your HR Sakhi. How can I help you with E S I C today?"));
   loadFit();
-  // greeting that mentions E S I C letters
-  setTimeout(()=>speak('Hi Deepa! I am HR Sakhi. How can I help you with maternity and E S I C today?'), 900);
-
-  // Start mic ON by default (if permission allowed)
-  (async ()=>{ await toggleMic(true); })();
+  initRec();
+  // Turn mic on initially (browser will prompt permission)
+  try{ rec && rec.start(); }catch{}
 </script>
 </body>
 </html>

@@ -1,238 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sakhi Voice — HR Assistant</title>
-<link rel="icon" href="./Sakhi_logo.png" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Deepa – HR Sakhi (ESIC ML)</title>
 <style>
-  :root{
-    --bg1:#16224b; --bg2:#0b1020; --glass:rgba(255,255,255,.12);
-    /* Mouth fit defaults (you can tweak from the Fit panel) */
-    --mouth-top:62%;         /* % from top of avatar */
-    --mouth-width:26%;       /* % of avatar width */
-    --mouth-closed:6px;      /* height when closed */
-    --mouth-open:18px;       /* height when open */
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
-    background:radial-gradient(circle at 50% -20%, var(--bg1), var(--bg2));
-    color:#fff; display:flex; flex-direction:column; align-items:center; min-height:100vh;
-  }
-  header{
-    width:100%; display:flex; justify-content:center; align-items:center; gap:10px; padding:10px 12px;
-  }
-  header img{height:32px}
-  h2{margin:0}
-
-  /* Avatar */
-  .avatar{
-    position:relative; width:min(70vw,260px); height:min(70vw,260px);
-    border-radius:50%; overflow:hidden; margin-top:24px;
-    box-shadow:0 10px 26px rgba(0,0,0,.35), 0 0 20px rgba(255,255,255,.12) inset;
-    border:1px solid var(--glass);
-    background:#0b1020;
-  }
-  .avatar img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
-  /* subtle chin shading to help the mouth blend */
-  .avatar::after{
-    content:""; position:absolute; left:0; right:0; bottom:0; height:36%;
-    background:linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,.10) 60%, rgba(0,0,0,.18) 100%);
-    pointer-events:none;
-  }
-  /* Mouth overlay */
-  .mouth{
-    position:absolute; left:50%; transform:translateX(-50%);
-    top:var(--mouth-top);
-    width:var(--mouth-width);
-    height:var(--mouth-closed);
-    background:#6d1b2a; border-radius:18px;
-    box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);
-    transition:height .08s ease;
-    mix-blend-mode:multiply;
-  }
-  .mouth.open{ height:var(--mouth-open); }
-
-  #response{
-    margin:18px 12px 6px; max-width:92%; text-align:center; line-height:1.4;
-  }
-  .btns{display:flex; gap:10px; margin:8px 0 12px}
-  button{
-    padding:10px 16px; border:none; border-radius:10px; font-weight:600; cursor:pointer; color:#fff;
-  }
-  #speakBtn{ background:#4da3ff }
-  #stopBtn { background:#3a3a3a }
-
-  /* Floating mic */
-  #micBtn{
-    position:fixed; right:16px; bottom:16px; width:62px; height:62px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center; font-size:26px;
-    color:#fff; background:#4da3ff; border:none; cursor:pointer;
-    box-shadow:0 8px 24px rgba(0,0,0,.35), 0 0 14px rgba(77,163,255,.5);
-  }
-  #micBtn.on{ background:#00c851; box-shadow:0 8px 24px rgba(0,0,0,.35), 0 0 14px rgba(0,200,81,.6) }
-
-  /* Fit mouth panel */
-  details.fit{ margin:8px 12px 20px; width:min(680px,95%); background:rgba(255,255,255,.04);
-    border:1px dashed var(--glass); border-radius:12px; padding:10px 12px; }
-  .fit .row{ display:flex; align-items:center; gap:10px; margin:6px 0 }
-  .fit label{ width:90px; font-size:.9rem; color:#cbd5ff }
-  .fit input[type="range"]{ flex:1 }
-  .muted{ color:#a8b5d9; font-size:.9rem }
+:root { --brand:#0078d7; }
+* { box-sizing:border-box; }
+body {
+  font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Noto Sans";
+  background:#f7f9fb; margin:0; color:#1f2937;
+  display:flex; flex-direction:column; min-height:100vh;
+}
+header { background:var(--brand); color:#fff; text-align:center; padding:14px 10px; font-weight:600; letter-spacing:.3px; }
+.wrap { width:min(980px,92vw); margin:20px auto 28px; }
+.top { display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:18px; }
+#ring {
+  width:220px; height:220px; border-radius:50%; padding:6px; background:#fff;
+  box-shadow:0 0 0 0 rgba(0,0,0,.15); transition:box-shadow .25s ease;
+}
+#ring img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+.btnrow { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+button {
+  background:var(--brand); color:#fff; border:none; border-radius:10px;
+  padding:10px 16px; font-weight:600; cursor:pointer;
+  box-shadow:0 6px 14px rgba(0,0,0,.12);
+}
+button.secondary { background:#111827; }
+button:hover { filter:brightness(.95); }
+.lang { display:flex; gap:8px; }
+.lang button { background:#e5e7eb; color:#111827; }
+.lang button.active { background:#0078d7; color:#fff; }
+.ask { display:flex; gap:8px; margin-top:10px; width:100%; max-width:580px; }
+.ask input { flex:1; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; background:#fff; }
+.card { background:#fff; border-radius:14px; padding:16px; box-shadow:0 8px 20px rgba(0,0,0,.06); margin-top:12px; }
+h2{margin:0 0 10px;font-size:1.1rem;}
+ul,ol{margin:8px 0 0 22px;}
+.note{color:#b91c1c;font-weight:600;}
+footer{margin-top:auto;text-align:center;color:#6b7280;padding:14px 8px;font-size:.9rem;}
+.toolbar { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; align-items:center; }
 </style>
 </head>
 <body>
-  <header>
-    <img src="./JIo_logo.png" alt="Jio">
-    <img src="./Sakhi_logo.png" alt="Sakhi">
-    <h2>HR Sakhi</h2>
-  </header>
+<header>Deepa – HR Sakhi (ESIC Maternity Benefits)</header>
 
-  <div class="avatar" id="avatar">
-    <img src="./sakhi-photo.jpg" alt="Deepa – HR Sakhi">
-    <div id="mouth" class="mouth"></div>
-  </div>
+<main class="wrap">
+  <section class="top">
+    <div id="ring"><img id="avatar" src="sakhi-photo.jpg" alt="Sakhi Avatar"/></div>
 
-  <p id="response">Namaste! I am Deepa, your HR Sakhi. How can I help you with maternity and E S I C today?</p>
-
-  <div class="btns">
-    <button id="speakBtn">🔊 Speak</button>
-    <button id="stopBtn">⏹ Stop</button>
-  </div>
-
-  <details class="fit">
-    <summary>Fit mouth</summary>
-    <div class="row"><label>Top</label>   <input id="rTop"   type="range" min="50" max="75" step="0.1"><span id="vTop"  class="muted"></span></div>
-    <div class="row"><label>Width</label> <input id="rW"     type="range" min="16" max="40" step="0.1"><span id="vW"    class="muted"></span></div>
-    <div class="row"><label>Closed</label><input id="rC"     type="range" min="4"  max="14" step="1"><span  id="vC"    class="muted"></span></div>
-    <div class="row"><label>Open</label>  <input id="rO"     type="range" min="12" max="28" step="1"><span  id="vO"    class="muted"></span></div>
-    <div class="row">
-      <button id="saveFit" style="background:#4da3ff">Save</button>
-      <button id="resetFit" style="background:#3a3a3a">Reset</button>
+    <div class="toolbar">
+      <div class="lang">
+        <button id="langEN" class="active">English</button>
+        <button id="langHI">हिंदी</button>
+      </div>
+      <button id="btnGreet">▶️ Greet</button>
+      <button id="btnProcess">▶️ Play ESIC Maternity Benefits</button>
+      <button id="btnStop" class="secondary">⏹ Stop</button>
     </div>
-    <div class="muted">Saved per-device in your browser.</div>
-  </details>
 
-  <button id="micBtn" class="on" title="Mic on/off">🎙️</button>
+    <div class="ask">
+      <input id="askInput" placeholder="Ask (e.g., 'What are the ESIC ML steps? / ईएसआईसी एमएल प्रक्रिया बताएं')" />
+      <button id="btnAsk">Ask</button>
+    </div>
+  </section>
+
+  <!-- On-screen reference (what she speaks for the process) -->
+  <section class="card">
+    <h2>ESIC Maternity Leave (ML) — Employee Process</h2>
+    <ul>
+      <li><strong>Initial Steps:</strong>
+        <ul>
+          <li>Inform HR of intended ML dates.</li>
+          <li>Visit ESI dispensary with <em>E-Pehchan Card</em> and <em>Medical Acceptance Card (MAC)</em>.</li>
+          <li>Log into ESIC IP portal; create password if first-time login.</li>
+        </ul>
+      </li>
+      <li><strong>Eligibility:</strong>
+        <ul>
+          <li>Minimum 70 days contribution in the two contribution cycles preceding the benefit period.</li>
+          <li>UAN must be seeded in ESIC system.</li>
+          <li>Obtain medical certificate from ESI dispensary.</li>
+        </ul>
+      </li>
+      <li><strong>Key ESIC Forms:</strong>
+        <ul>
+          <li>Form 17 – Declaration (no third child, no double claims).</li>
+          <li>Form 18 – Expected delivery certificate issued by doctor.</li>
+          <li>Form 19 – Leave declaration, updated in PeopleFirst (critical).</li>
+          <li>Forms 20 &amp; 21 – For nominee, applicable in case of maternal death.</li>
+        </ul>
+      </li>
+      <li><strong>Step-by-Step Application:</strong>
+        <ol>
+          <li>Share E-Pehchan card with HRBP → forwarded to JC for stamping.</li>
+          <li>Visit JC with family photo → card stamped.</li>
+          <li>Visit ESIC dispensary → doctor advises leave, issues Form 18.</li>
+          <li>Apply ML on PeopleFirst → attach Form 18 → Manager &amp; HRBP approve.</li>
+          <li>Up to 4 weeks leave may be availed before EDD, as per Form 18.</li>
+          <li>Post-delivery: Visit Branch Office with required documents.</li>
+          <li>ESIC verifies &amp; disburses 100% of average daily wages (monthly/lump sum, max 182 days).</li>
+        </ol>
+      </li>
+      <li><strong>Required Documents for Payment:</strong>
+        <ul>
+          <li>Form 18 (Dispensary), Birth Certificate (Original)</li>
+          <li>Form 19 &amp; Form 22 (Branch Office)</li>
+          <li>Admission/Discharge Certificate (signed &amp; stamped)</li>
+          <li>Medical Certificate (Original)</li>
+          <li>Children Declaration Certificate (by Employer), Form 10 (by Employer)</li>
+          <li>ESIC Online Form Xerox, Aadhaar (Employee/IP), Bank Passbook copy</li>
+        </ul>
+      </li>
+    </ul>
+    <p class="note">⚠️ Submit all documents within 45 days post-delivery at the assigned ESIC Branch Office.</p>
+    <p><strong>Responsibility:</strong> Employee must ensure the ML application is fully approved on PeopleFirst.</p>
+  </section>
+</main>
+
+<footer>© 2025 Sakhi Voice – HR Digital Assistant</footer>
 
 <script>
-  /* ================= Speech Synthesis helpers ================= */
-  const synth = window.speechSynthesis;
-  function ensureVoices(cb){ if(synth.getVoices().length) cb(); else speechSynthesis.onvoiceschanged = cb; }
+// ===== Visual glow =====
+const ring = document.getElementById('ring');
+function setSpeaking(on){
+  ring.style.boxShadow = on
+    ? '0 0 0 8px rgba(0,140,255,.22), 0 0 28px rgba(0,140,255,.35)'
+    : '0 0 0 0 rgba(0,0,0,.15)';
+}
 
-  // Prefer Microsoft Neerja (en-IN), else any en-IN female-ish, else first
-  function pickIndianFemale(){
-    const voices = synth.getVoices();
-    const neerja = voices.find(v => (v.name||'').toLowerCase().includes('neerja') && (v.lang||'').toLowerCase().startsWith('en-in'));
-    if(neerja) return neerja;
-    const enIn = voices.filter(v => (v.lang||'').toLowerCase().startsWith('en-in'));
-    const femaleHint = ['female','neural','aditi','priya','meera','ananya','sonia','zara','asha','lakshmi','revathi'];
-    const female = enIn.find(v => femaleHint.some(h => (v.name||'').toLowerCase().includes(h)));
-    return female || enIn[0] || voices[0] || null;
+// ===== Language state (EN default) =====
+let LANG = 'EN';
+const langENBtn = document.getElementById('langEN');
+const langHIBtn = document.getElementById('langHI');
+langENBtn.addEventListener('click', () => { LANG='EN'; langENBtn.classList.add('active'); langHIBtn.classList.remove('active'); });
+langHIBtn.addEventListener('click', () => { LANG='HI'; langHIBtn.classList.add('active'); langENBtn.classList.remove('active'); });
+
+// ===== Speech engine =====
+const synth = window.speechSynthesis;
+
+// Prefer FEMALE voices only, EN or HI
+function pickFemaleVoice(langCode){ // 'en' or 'hi'
+  const voices = synth.getVoices();
+
+  // Helpers
+  const hasFem = v => /(female|Heera|Neerja|Swara|Zira|Meera|Natasha|Anya|Asha|Priya|Sarla|Madhur|Neural|Natural)/i.test(v.name);
+
+  // Strict priorities:
+  if (langCode==='en') {
+    // 1) en-IN female
+    let v = voices.find(v => /en-IN/i.test(v.lang) && hasFem(v));
+    if (v) return v;
+    // 2) en-* female
+    v = voices.find(v => /^en/i.test(v.lang) && hasFem(v));
+    if (v) return v;
+    // 3) fallback any en-*
+    v = voices.find(v => /^en/i.test(v.lang));
+    if (v) return v;
+  } else {
+    // 1) hi-IN female
+    let v = voices.find(v => /hi-IN/i.test(v.lang) && hasFem(v));
+    if (v) return v;
+    // 2) hi-* female
+    v = voices.find(v => /^hi/i.test(v.lang) && hasFem(v));
+    if (v) return v;
+    // 3) fallback any hi-*
+    v = voices.find(v => /^hi/i.test(v.lang));
+    if (v) return v;
   }
+  // Final fallback: try the other language female, else first available
+  let v = voices.find(v => hasFem(v));
+  return v || voices[0];
+}
 
-  function sayESICLetters(text){ return text.replace(/esic/ig,'E S I C').replace(/e\s*s\s*i\s*c/ig,'E S I C'); }
+// Expand abbreviations for clearer TTS (both languages)
+function expandAbbr(t){
+  return t
+    .replace(/\bE[\.\-\s]*S[\.\-\s]*I[\.\-\s]*C\b/gi,'E S I C')
+    .replace(/\bESI\b/gi,'E S I')
+    .replace(/\bHR\b/g,'H R')
+    .replace(/\bUAN\b/g,'U A N')
+    .replace(/\bJC\b/g,'J C');
+}
 
-  function speak(text){
-    const u = new SpeechSynthesisUtterance(sayESICLetters(text));
-    u.lang = 'en-IN';
-    const v = pickIndianFemale(); if(v) u.voice = v;
-    u.rate = 0.97; u.pitch = 1.05;
-
-    // Pseudo lip-sync
-    const mouth = document.getElementById('mouth');
-    let flap;
-    u.onstart = ()=>{ flap = setInterval(()=> mouth.classList.toggle('open'), 120); };
-    u.onboundary = ()=>{ mouth.classList.add('open'); setTimeout(()=> mouth.classList.remove('open'), 70); };
-    u.onend = ()=>{ clearInterval(flap); mouth.classList.remove('open'); };
-    u.onerror = ()=>{ clearInterval(flap); mouth.classList.remove('open'); };
-
-    synth.cancel(); // stop anything else
+// Speak helpers
+function speakLine(text, langCode){
+  if (!('speechSynthesis' in window)) { alert('Speech not supported'); return; }
+  const u = new SpeechSynthesisUtterance(expandAbbr(text));
+  const start = () => {
+    u.voice = pickFemaleVoice(langCode);
+    u.lang  = (langCode==='hi' ? 'hi-IN' : 'en-IN');
+    u.rate  = 1.0;
+    u.pitch = 1.1;
+    u.onstart = () => setSpeaking(true);
+    u.onend   = () => setSpeaking(false);
+    u.onerror = () => setSpeaking(false);
+    synth.cancel();
     synth.speak(u);
-  }
+  };
+  if (synth.getVoices().length===0) { window.speechSynthesis.onvoiceschanged = start; } else { start(); }
+}
 
-  /* ================= UI buttons ================= */
-  const response = document.getElementById('response');
-  document.getElementById('speakBtn').onclick = ()=> speak(response.textContent);
-  document.getElementById('stopBtn').onclick = ()=> synth.cancel();
-
-  /* ================= Mic: continuous recognition with recovery ================= */
-  const micBtn = document.getElementById('micBtn');
-  let rec, micOn = true, listening = false;
-
-  function initRec(){
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR){ alert("Speech recognition not supported in this browser."); return; }
-    rec = new SR();
-    rec.lang = 'en-IN';
-    rec.continuous = true;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-
-    rec.onstart = ()=>{ listening=true; micBtn.classList.add('on'); };
-    rec.onend   = ()=>{ listening=false; if(micOn) setTimeout(()=>{ try{ rec.start(); }catch{} }, 250); };
-    rec.onerror = (e)=>{ if(['no-speech','audio-capture','network'].includes(e.error)){ if(micOn){ try{ rec.stop(); }catch{} } } };
-    rec.onresult= (ev)=>{
-      const txt = ev.results[ev.results.length-1][0].transcript;
-      response.textContent = "You said: " + txt;
-      replyTo(txt);
+function speakQueue(lines, langCode){
+  let i=0;
+  const next=()=>{
+    if(i>=lines.length){ setSpeaking(false); return; }
+    const u = new SpeechSynthesisUtterance(expandAbbr(lines[i]));
+    const go = () => {
+      u.voice = pickFemaleVoice(langCode);
+      u.lang  = (langCode==='hi' ? 'hi-IN' : 'en-IN');
+      u.rate=1.0; u.pitch=1.1;
+      u.onend=()=>{ i++; next(); };
+      u.onerror=()=>{ i++; next(); };
+      if(i===0) setSpeaking(true);
+      synth.speak(u);
     };
-  }
-
-  micBtn.onclick = ()=>{
-    if(!rec) initRec();
-    micOn = !micOn;
-    if(micOn){ micBtn.classList.add('on'); try{ rec.start(); }catch{} }
-    else     { micBtn.classList.remove('on'); try{ rec.stop(); }catch{} }
+    if (synth.getVoices().length===0) { window.speechSynthesis.onvoiceschanged = go; } else { go(); }
   };
+  synth.cancel(); next();
+}
 
-  function replyTo(q){
-    const s = (q||'').toLowerCase();
-    const ESIC = 'E S I C';
-    let ans =
-      s.includes('maternity') ? `Under ${ESIC}, maternity leave provides twenty six weeks of paid leave and full medical benefits.` :
-      (s.includes('e s i c') || s.includes('esic')) ? `${ESIC} is the Employees State Insurance Corporation. I can help with your IP number, dispensary and claims.` :
-      s.includes('leave') ? `Please raise leave in the myHR portal. For emergencies, inform your manager and submit within twenty four hours.` :
-      `I am your HR Sakhi. Ask me about maternity benefits, ${ESIC}, leave, or policies.`;
-    response.textContent = ans;
-    speak(ans);
+// ===== Content (EN + HI) =====
+const lines = {
+  EN: {
+    greet: "Namasthe, I am Deepa, your H R Sakhi.",
+    followUp: "Is there anything else I can help you with?",
+    close: "Thank you for reaching out to H R Sakhi. Dhanyavad.",
+    unknown: "Please contact your H R B P for more information.",
+    process: [
+      "E S I C Maternity Benefits.",
+      "Initial steps: Inform H R of intended M L dates. Visit the E S I dispensary with E Pehchan Card and Medical Acceptance Card, M A C. Log in to the E S I C I P portal and create a password if first time.",
+      "Eligibility: Minimum seventy days of contribution in the two contribution cycles preceding the benefit period. U A N must be seeded in the E S I C system. Obtain a medical certificate from the E S I dispensary.",
+      "Key E S I C forms: Form 17 declaration. Form 18 expected delivery certificate. Form 19 leave declaration to be updated in People First. Forms 20 and 21 for nominee in case of maternal death.",
+      "Application steps: Share E Pehchan card with H R B P and forward to J C for stamping. Visit J C with family photo for stamping. Visit the E S I C dispensary, doctor advises leave and issues Form 18. Apply M L on People First and attach Form 18; Manager and H R B P approve. Up to four weeks of leave may be availed before expected delivery date as per Form 18. After delivery, visit the Branch Office with required documents. E S I C verifies and disburses one hundred percent of average daily wages, monthly or lump sum, up to one hundred eighty two days.",
+      "Required documents: Form 18; Birth Certificate original; Form 19 and Form 22; Admission and Discharge Certificate signed and stamped; Medical Certificate original; Children Declaration Certificate by employer; Form 10 by employer; E S I C online form xerox; Aadhaar; and bank passbook copy.",
+      "Important: Submit all documents within forty five days post delivery at the assigned E S I C Branch Office.",
+      "Responsibility: Ensure the M L application is fully approved on People First."
+    ]
+  },
+  HI: {
+    greet: "नमस्ते, मैं दीपा, आपकी एच आर सखी हूँ।",
+    followUp: "क्या मैं आपकी किसी और तरह से सहायता कर सकती हूँ?",
+    close: "एच आर सखी से संपर्क करने के लिए धन्यवाद। धन्यवाद।",
+    unknown: "अधिक जानकारी के लिए कृपया अपने एच आर बी पी से संपर्क करें।",
+    process: [
+      "E S I C मातृत्व लाभ।",
+      "प्रारंभिक चरण: प्रस्तावित एम एल तिथियाँ एच आर को बताएं। E S I डिस्पेंसरी जाएँ और E-Pehchan कार्ड तथा मेडिकल एक्सेप्टेंस कार्ड, M A C साथ रखें। E S I C I P पोर्टल में लॉगिन करें, पहली बार हो तो पासवर्ड बनाएँ।",
+      "पात्रता: लाभ अवधि से पहले की दो योगदान चक्रों में कम से कम सत्तर दिनों का योगदान। U A N, E S I C सिस्टम में सीडेड हो। E S I डिस्पेंसरी से मेडिकल सर्टिफिकेट प्राप्त करें।",
+      "महत्वपूर्ण E S I C फॉर्म: फॉर्म 17—डिक्लेरेशन। फॉर्म 18—अपेक्षित प्रसव प्रमाणपत्र। फॉर्म 19—लीव डिक्लेरेशन, जिसे पीपलफर्स्ट में अपडेट करना आवश्यक है। फॉर्म 20 एवं 21—नामांकित व्यक्ति के लिए (मातृ मृत्यु के मामले में)।",
+      "आवेदन चरण: E-Pehchan कार्ड एच आर बी पी के साथ साझा करें; J C में स्टैम्पिंग हेतु भेजें। पारिवारिक फोटो के साथ J C जाएँ और कार्ड पर स्टैम्पिंग करवाएँ। E S I C डिस्पेंसरी जाएँ; डॉक्टर अवकाश की सलाह देकर फॉर्म 18 जारी करते हैं। पीपलफर्स्ट पर एम एल लगाएँ और फॉर्म 18 संलग्न करें; मैनेजर और एच आर बी पी स्वीकृत करते हैं। अनुमानित प्रसव तिथि से पहले फॉर्म 18 के अनुसार अधिकतम चार सप्ताह का अवकाश लिया जा सकता है। प्रसव के बाद आवश्यक दस्तावेजों के साथ ब्रांच ऑफिस जाएँ। E S I C सत्यापन करके औसत दैनिक वेतन का सौ प्रतिशत मासिक या एकमुश्त, अधिकतम एक सौ बयासी दिनों तक, जारी करता है।",
+      "भुगतान हेतु आवश्यक दस्तावेज: फॉर्म 18; जन्म प्रमाण पत्र (मूल); फॉर्म 19 एवं 22; एडमिशन/डिस्चार्ज सर्टिफिकेट (हस्ताक्षरित एवं सील सहित); मेडिकल सर्टिफिकेट (मूल); चिल्ड्रन डिक्लेरेशन सर्टिफिकेट (नियोक्ता द्वारा); फॉर्म 10 (नियोक्ता द्वारा); E S I C ऑनलाइन फॉर्म ज़ेरॉक्स; आधार; और बैंक पासबुक की प्रति।",
+      "महत्वपूर्ण: सभी दस्तावेज प्रसव पश्चात पैंतालीस दिनों के भीतर निर्धारित E S I C ब्रांच ऑफिस में जमा करें।",
+      "जिम्मेदारी: पीपलफर्स्ट पर एम एल आवेदन की पूर्ण स्वीकृति सुनिश्चित करें।"
+    ]
+  }
+};
+
+// ===== Greeting control (only when Greet is pressed) =====
+let greeted = false;
+
+// ===== Routing =====
+const processWordsEN = ['process','procedure','steps','how to','apply','workflow','peoplefirst','policy'];
+const processWordsHI = ['प्रक्रिया','स्टेप','कदम','कैसे','आवेदन','प्रोसेस','वर्कफ़्लो','पीपलफर्स्ट','नीति'];
+
+function routeQuery(q){
+  const t = (q||'').toLowerCase();
+  const mentionsESIC = /(esic|e\.s\.i\.c|esi|ईएसआईसी|ई\.एस\.आई\.सी|ईएसआई)/i.test(q||'');
+  const asksProcess = (LANG==='HI' ? processWordsHI : processWordsEN).some(w => t.includes(w));
+  if (mentionsESIC && asksProcess) return 'process';
+  if (mentionsESIC) return 'unknown';
+  return 'unknown';
+}
+
+// ===== Buttons =====
+document.getElementById('btnGreet').addEventListener('click', () => {
+  greeted = true;
+  const pack = lines[LANG];
+  speakLine(pack.greet, LANG==='HI' ? 'hi' : 'en');
+});
+
+document.getElementById('btnProcess').addEventListener('click', () => {
+  const pack = lines[LANG];
+  const seq = (greeted ? [] : [pack.greet]).concat(pack.process).concat([pack.followUp]);
+  greeted = true;
+  speakQueue(seq, LANG==='HI' ? 'hi' : 'en');
+});
+
+document.getElementById('btnStop').addEventListener('click', () => { synth.cancel(); setSpeaking(false); });
+
+document.getElementById('btnAsk').addEventListener('click', () => {
+  const q = document.getElementById('askInput').value.trim();
+  handleUserInput(q);
+});
+
+// ===== Conversational loop (follow-up & graceful close) =====
+function handleUserInput(userText){
+  const pack = lines[LANG];
+
+  // Close intents (EN + HI)
+  const closeEN = /\b(no|nothing|that'?s all|thank you|thanks)\b/i.test(userText||'');
+  const closeHI = /(नहीं|नहि|बस|धन्यवाद|शुक्रिया)/i.test(userText||'');
+  if (closeEN || closeHI){
+    speakLine(pack.close, LANG==='HI' ? 'hi' : 'en');
+    return;
   }
 
-  /* ================= Mouth fit save/load ================= */
-  const avatar = document.getElementById('avatar');
-  const rTop = document.getElementById('rTop'), rW = document.getElementById('rW'), rC = document.getElementById('rC'), rO = document.getElementById('rO');
-  const vTop = document.getElementById('vTop'), vW = document.getElementById('vW'), vC = document.getElementById('vC'), vO = document.getElementById('vO');
-  const saveFit = document.getElementById('saveFit'), resetFit = document.getElementById('resetFit');
-
-  function applyFit(t,w,c,o){
-    avatar.style.setProperty('--mouth-top', t+'%');
-    avatar.style.setProperty('--mouth-width', w+'%');
-    avatar.style.setProperty('--mouth-closed', c+'px');
-    avatar.style.setProperty('--mouth-open', o+'px');
-    rTop.value=t; rW.value=w; rC.value=c; rO.value=o;
-    vTop.textContent=t+'%'; vW.textContent=w+'%'; vC.textContent=c+'px'; vO.textContent=o+'px';
+  const intent = routeQuery(userText);
+  if (intent === 'process'){
+    const seq = (greeted ? [] : [pack.greet]).concat(pack.process).concat([pack.followUp]);
+    greeted = true;
+    speakQueue(seq, LANG==='HI' ? 'hi' : 'en');
+  } else {
+    // Unknown/out of scope → HRBP + follow-up
+    const seq = [(greeted ? null : pack.greet), pack.unknown, pack.followUp].filter(Boolean);
+    greeted = true;
+    speakQueue(seq, LANG==='HI' ? 'hi' : 'en');
   }
-  function loadFit(){
-    const d = JSON.parse(localStorage.getItem('sakhi-mouth-fit')||'{}');
-    applyFit(d.top ?? 62, d.w ?? 26, d.c ?? 6, d.o ?? 18);
-  }
-  saveFit.onclick = (e)=>{ e.preventDefault();
-    localStorage.setItem('sakhi-mouth-fit', JSON.stringify({top:+rTop.value, w:+rW.value, c:+rC.value, o:+rO.value}));
-  };
-  resetFit.onclick = (e)=>{ e.preventDefault(); localStorage.removeItem('sakhi-mouth-fit'); loadFit(); };
-
-  rTop.oninput=()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
-  rW.oninput  =()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
-  rC.oninput  =()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
-  rO.oninput  =()=>applyFit(+rTop.value,+rW.value,+rC.value,+rO.value);
-
-  /* ================= Init ================= */
-  ensureVoices(()=> speak("Namaste! I am Deepa, your HR Sakhi. How can I help you with E S I C today?"));
-  loadFit();
-  initRec();
-  // Turn mic on initially (browser will prompt permission)
-  try{ rec && rec.start(); }catch{}
+}
 </script>
 </body>
 </html>

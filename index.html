@@ -6,274 +6,294 @@
 <title>Deepa — HR Sakhi</title>
 <meta name="theme-color" content="#6b46c1">
 <style>
-  :root{
-    --bg1:#faf7ff; --bg2:#efe9ff; --ink:#111827; --muted:#6b7280;
-    --brand:#6b46c1; --ok:#22c55e;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial}
+  :root{
+    --bg1:#faf7ff; --bg2:#efe9ff; --ink:#111827; --muted:#6b7280;
+    --brand:#6b46c1; --ok:#22c55e;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial}
 
-  /* Corner logos */
-  .logos{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
-  .logos img{height:40px;object-fit:contain;pointer-events:auto}
-  .logos img.hide{display:none}
+  /* Corner logos */
+  .logos{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
+  .logos img{height:40px;object-fit:contain;pointer-events:auto}
+  .logos img.hide{display:none}
 
-  /* Fullscreen avatar stage */
-  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:10px}
-  .avatar-wrap{position:relative;width:min(100vw,900px);height:min(100vh,100vh);}
-  .avatar{position:absolute;inset:0;border-radius:20px;overflow:hidden;background:#f3ecff}
-  .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  /* Fullscreen avatar stage */
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:10px}
+  /* FIX: Use 100% height relative to the parent (.stage) which is fixed to the viewport */
+  .avatar-wrap{position:relative;width:min(100vw,900px);height:100%;}
+  .avatar{position:absolute;inset:0;border-radius:20px;overflow:hidden;background:#f3ecff}
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block}
 
-  /* Soft professional lip-sync (rhythmic, cross-browser safe) */
-  .mouth{position:absolute;left:50%;bottom:10%;width:42px;height:10px;border-radius:12px;background:var(--brand);
-         transform:translateX(-50%) scaleX(.8);opacity:.9;transition:height .08s ease}
-  .talk-slow{height:14px}
-  .talk-mid{height:18px}
-  .talk-fast{height:22px}
+  /* Soft professional lip-sync (rhythmic, cross-browser safe) */
+  .mouth{position:absolute;left:50%;bottom:10%;width:42px;height:10px;border-radius:12px;background:var(--brand);
+         transform:translateX(-50%) scaleX(.8);opacity:.9;transition:height .08s ease}
+  .talk-slow{height:14px}
+  .talk-mid{height:18px}
+  .talk-fast{height:22px}
 
-  /* Bottom panel */
-  .panel{position:fixed;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(180deg,transparent,rgba(250,247,255,.96) 40%);
-         display:flex;flex-direction:column;gap:8px;z-index:15}
-  .row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
-  .btn{border:0;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;padding:10px 14px;cursor:pointer}
-  .btn.secondary{background:#111827}
-  .ask{flex:1;min-width:240px;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
-  .meter{height:6px;background:#e5e7eb;border-radius:999px;overflow:hidden}
-  .meter>i{display:block;height:100%;width:0;background:var(--ok);transition:width .12s}
-  .status{font-size:12px;color:var(--muted);text-align:center}
-  .chat{max-height:26vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
-  .bub{align-self:center;max-width:min(92vw,820px);border-radius:12px;padding:8px 10px}
-  .me{background:#eef2ff}.ai{background:#ecfeff}
+  /* Bottom panel */
+  .panel{position:fixed;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(180deg,transparent,rgba(250,247,255,.96) 40%);
+         display:flex;flex-direction:column;gap:8px;z-index:15}
+  .row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .btn{border:0;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;padding:10px 14px;cursor:pointer}
+  .btn.secondary{background:#111827}
+  .ask{flex:1;min-width:240px;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
+  .meter{height:6px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+  .meter>i{display:block;height:100%;width:0;background:var(--ok);transition:width .12s}
+  .status{font-size:12px;color:var(--muted);text-align:center}
+  .chat{max-height:26vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .bub{align-self:center;max-width:min(92vw,820px);border-radius:12px;padding:8px 10px}
+  .me{background:#eef2ff}.ai{background:#ecfeff}
 
-  /* One-tap splash (unlock audio/mic) */
-  .splash{position:fixed;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(6px);
-          display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
-  .pill{margin-top:14px;border:1px solid #d1d5db;border-radius:999px;background:#fff;padding:10px 14px;font-weight:700;cursor:pointer}
+  /* One-tap splash (unlock audio/mic) */
+  .splash{position:fixed;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(6px);
+          display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+  .pill{margin-top:14px;border:1px solid #d1d5db;border-radius:999px;background:#fff;padding:10px 14px;font-weight:700;cursor:pointer}
 
-  @media (max-width:640px){ .logos img{height:32px} }
+  @media (max-width:640px){ .logos img{height:32px} }
 </style>
 </head>
 <body>
 
-<!-- Logos: left Sakhi (with original tagline in the image), right Jio (blue) -->
 <div class="logos" aria-hidden="true">
-  <img id="sakhiLogo" src="Sakhi_logo.png" alt="Sakhi logo with tagline" onerror="this.classList.add('hide')">
-  <img id="jioLogo"   src="Jio_logo.png"   alt="Jio logo"                   onerror="this.classList.add('hide')">
+  <img id="sakhiLogo" src="Sakhi_logo.png" alt="Sakhi logo" onerror="this.classList.add('hide')">
+  <img id="jioLogo"   src="Jio_logo.png"   alt="Jio logo"                   onerror="this.classList.add('hide')">
 </div>
 
-<!-- Full-screen avatar -->
 <div class="stage" role="main" aria-label="Deepa — HR Sakhi">
-  <div class="avatar-wrap">
-    <div class="avatar">
-      <img id="deepaImg" src="sakhi-photo.jpg" alt="Deepa — HR Sakhi">
-      <div id="mouth" class="mouth"></div>
-    </div>
-  </div>
+  <div class="avatar-wrap">
+    <div class="avatar">
+      <img id="deepaImg" src="sakhi-photo.jpg" alt="Deepa — HR Sakhi">
+      <div id="mouth" class="mouth"></div>
+    </div>
+  </div>
 </div>
 
-<!-- One-tap splash -->
 <section id="splash" class="splash" aria-modal="true">
-  <div style="font-size:20px;font-weight:900;color:#0f172a">Sakhi • Jio</div>
-  <div style="font-size:13px;color:#334155">Your Digital HR Companion</div>
-  <button id="tapStart" class="pill">Tap to start</button>
+  <div style="font-size:20px;font-weight:900;color:#0f172a">Sakhi • Jio</div>
+  <div style="font-size:13px;color:#334155">Your Digital HR Companion</div>
+  <button id="tapStart" class="pill">Tap to start</button>
 </section>
 
-<!-- Bottom controls (no process text visible) -->
 <div class="panel" aria-live="polite">
-  <div class="row">
-    <button id="stopBtn" class="btn secondary">■ Stop</button>
-    <input id="q" class="ask" placeholder="Ask (e.g., ESIC maternity steps)" autocomplete="off">
-    <button id="askBtn" class="btn">Ask</button>
-  </div>
-  <div class="meter"><i id="mbar"></i></div>
-  <div id="mstatus" class="status">Mic Off</div>
-  <div id="chat" class="chat" aria-label="Conversation"></div>
+  <div class="row">
+    <button id="stopBtn" class="btn secondary">■ Stop</button>
+    <input id="q" class="ask" placeholder="Ask (e.g., ESIC maternity steps)" autocomplete="off">
+    <button id="askBtn" class="btn">Ask</button>
+  </div>
+  <div class="meter"><i id="mbar"></i></div>
+  <div id="mstatus" class="status">Mic Off</div>
+  <div id="chat" class="chat" aria-label="Conversation"></div>
 </div>
 
 <script>
 /* ========== Elements ========== */
-const splash  = document.getElementById('splash');
-const tapBtn  = document.getElementById('tapStart');
-const chat    = document.getElementById('chat');
-const mouth   = document.getElementById('mouth');
-const mbar    = document.getElementById('mbar');
+const splash  = document.getElementById('splash');
+const tapBtn  = document.getElementById('tapStart');
+const chat    = document.getElementById('chat');
+const mouth   = document.getElementById('mouth');
+const mbar    = document.getElementById('mbar');
 const mstatus = document.getElementById('mstatus');
-const qInput  = document.getElementById('q');
-const askBtn  = document.getElementById('askBtn');
+const qInput  = document.getElementById('q');
+const askBtn  = document.getElementById('askBtn');
 const stopBtn = document.getElementById('stopBtn');
 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
-let saidHRBP = false;   // only once per session
-let ended = false;      // session end flag
-let speakingTimer = 0;  // soft lip-sync rhythm
+let saidHRBP = false;   // only once per session
+let ended = false;      // session end flag
+let speakingTimer = 0;  // soft lip-sync rhythm
 
 /* ========== ESIC Knowledge (concise; not shown on screen) ========== */
 const KB = {
-  steps: "Inform HRBP → Visit ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal (create password if first time) → Ensure 70 days contribution in previous two periods → Collect/submit Forms 17/18/19 (22 only if applicable) → Apply ML in PeopleFirst as per Form 18 → After delivery, submit proofs at ESIC Branch Office within 45 days → ESIC pays 100% of average daily wages for up to 182 days.",
-  docs:  "E-Pehchan & MAC, Form 17 (declaration), Form 18 (EDD by ESIC doctor), Form 19 (leave period), Form 22 if applicable, birth certificate, Aadhaar, bank details, admission/discharge papers, employer Form-10 and children count declaration.",
-  contrib:"Contribution rates: Employer 3.25% + Employee 0.75% of wages; coverage typically up to ₹21,000/month wages (as per official notifications).",
-  overvw:"ESIC provides medical care and cash benefits for sickness, maternity, employment injury, and dependent’s benefits for eligible employees."
+  steps: "Inform HRBP → Visit ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal (create password if first time) → Ensure 70 days contribution in previous two periods → Collect/submit Forms 17/18/19 (22 only if applicable) → Apply ML in PeopleFirst as per Form 18 → After delivery, submit proofs at ESIC Branch Office within 45 days → ESIC pays 100% of average daily wages for up to 182 days.",
+  docs:  "E-Pehchan & MAC, Form 17 (declaration), Form 18 (EDD by ESIC doctor), Form 19 (leave period), Form 22 if applicable, birth certificate, Aadhaar, bank details, admission/discharge papers, employer Form-10 and children count declaration.",
+  contrib:"Contribution rates: Employer 3.25% + Employee 0.75% of wages; coverage typically up to ₹21,000/month wages (as per official notifications).",
+  overvw:"ESIC provides medical care and cash benefits for sickness, maternity, employment injury, and dependent’s benefits for eligible employees."
 };
 
 /* ========== Helpers ========== */
 function addBubble(who, text){
-  const b = document.createElement('div');
-  b.className = 'bub ' + (who==='me'?'me':'ai');
-  b.innerHTML = text;
-  chat.appendChild(b);
-  b.scrollIntoView({behavior:'smooth',block:'end'});
+  const b = document.createElement('div');
+  b.className = 'bub ' + (who==='me'?'me':'ai');
+  b.innerHTML = text;
+  chat.appendChild(b);
+  b.scrollIntoView({behavior:'smooth',block:'end'});
 }
 function setMeter(p){ mbar.style.width = Math.max(0,Math.min(100,p))+'%'; }
 function setStatus(txt){ mstatus.textContent = txt; }
 
-/* ========== Speech: Indian English female; soft rhythmic lip-sync ========== */
-function pickVoice(){
-  const vs = speechSynthesis.getVoices();
-  let v = vs.find(v=>/en-IN/i.test(v.lang) && /female/i.test(v.name)) ||
-          vs.find(v=>/en-IN/i.test(v.lang)) ||
-          vs.find(v=>/English/i.test(v.lang)) ||
-          vs[0];
-  return v || null;
+/* ========== Voice Selection & Speech: Indian English female; soft rhythmic lip-sync ========== */
+
+let indiaFemaleVoice = null;
+
+// FIX: Find the voice and store it only once, waiting for voiceschanged event
+function findAndSetVoice() {
+    const vs = speechSynthesis.getVoices();
+    // Prioritize English-India Female
+    indiaFemaleVoice = vs.find(v => /en-IN/i.test(v.lang) && /female/i.test(v.name)) ||
+                       vs.find(v => /en-IN/i.test(v.lang)) ||  // Fallback to any en-IN
+                       vs.find(v => /English/i.test(v.lang)); // Fallback to any English
 }
+
+// Hook into the event to make sure voices are available
+window.speechSynthesis.onvoiceschanged = findAndSetVoice;
+// Call it once immediately, in case the event already fired
+findAndSetVoice();
+
+function pickVoice(){
+    return indiaFemaleVoice; // Return the pre-selected voice
+}
+
 function lipsyncStart(){
-  clearInterval(speakingTimer);
-  let phase = 0;
-  speakingTimer = setInterval(()=>{
-    phase = (phase+1)%3;
-    mouth.classList.remove('talk-slow','talk-mid','talk-fast');
-    mouth.classList.add(phase===0?'talk-slow':phase===1?'talk-mid':'talk-fast');
-  }, 110);
+  clearInterval(speakingTimer);
+  let phase = 0;
+  speakingTimer = setInterval(()=>{
+    phase = (phase+1)%3;
+    mouth.classList.remove('talk-slow','talk-mid','talk-fast');
+    mouth.classList.add(phase===0?'talk-slow':phase===1?'talk-mid':'talk-fast');
+  }, 110);
 }
 function lipsyncStop(){
-  clearInterval(speakingTimer);
-  mouth.classList.remove('talk-slow','talk-mid','talk-fast');
+  clearInterval(speakingTimer);
+  mouth.classList.remove('talk-slow','talk-mid','talk-fast');
 }
+
 function speak(text){
-  if(ended) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.voice = pickVoice();
-  u.rate = 0.96; u.pitch = 1.0;
-  u.onstart = lipsyncStart;
-  u.onend   = lipsyncStop;
-  speechSynthesis.cancel(); // clean queue
-  speechSynthesis.speak(u);
+  if(ended) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.voice = pickVoice(); // Use the pre-selected voice
+  u.rate = 0.96; u.pitch = 1.0;
+  u.onstart = lipsyncStart;
+  u.onend   = lipsyncStop;
+  speechSynthesis.cancel(); // clean queue
+  speechSynthesis.speak(u);
 }
 
 /* ========== Router (ESIC only; off-scope → HRBP once) ========== */
 function route(msg){
-  const input = (msg||'').trim();
-  const t = input.toLowerCase();
+  const input = (msg||'').trim();
+  const t = input.toLowerCase();
 
-  // End phrases
-  if(/^(no|nope|not now|thank you|thanks|ok|okay|bye|bye now|that is all)$/.test(input)){
-    ended = true; addBubble('ai','<b>Deepa:</b> Dhanyavaad.'); speak("Dhanyavaad."); return null;
-  }
+  // End phrases
+  if(/^(no|nope|not now|thank you|thanks|ok|okay|bye|bye now|that is all)$/.test(input)){
+    ended = true; addBubble('ai','<b>Deepa:</b> Dhanyavaad.'); speak("Dhanyavaad."); return null;
+  }
 
-  const has = (...ks)=>ks.some(k=>t.includes(k));
-  if(has('step','process','apply','claim','how to')) return KB.steps;
-  if(has('doc','document','docs','forms','form 17','form17','form 18','form18','form 19','form19','form 22','form22')) return KB.docs;
-  if(has('contribution','rate','employee contribution','employer contribution','percentage','%')) return KB.contrib;
-  if(has('what is esic','what is e s i c','overview','esic scheme','e s i c scheme','benefits')) return KB.overvw;
+  const has = (...ks)=>ks.some(k=>t.includes(k));
+  if(has('step','process','apply','claim','how to')) return KB.steps;
+  if(has('doc','document','docs','forms','form 17','form17','form 18','form18','form 19','form19','form 22','form22')) return KB.docs;
+  if(has('contribution','rate','employee contribution','employer contribution','percentage','%')) return KB.contrib;
+  if(has('what is esic','what is e s i c','overview','esic scheme','e s i c scheme','benefits')) return KB.overvw;
 
-  // any mail/email request
-  if(has('email','mail','send mail','send email','e-mail')){
-    if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
-    return "Let me guide you on E S I C here.";
-  }
+  // any mail/email request
+  if(has('email','mail','send mail','send email','e-mail')){
+    if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
+    return "Let me guide you on E S I C here.";
+  }
 
-  // off-scope (once)
-  if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
-  return "I can guide E S I C maternity steps, documents and payments. Ask about steps or documents.";
+  // off-scope (once)
+  if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
+  return "I can guide E S I C maternity steps, documents and payments. Ask about steps or documents.";
 }
 
 /* ========== Speech Recognition (auto listening + green bar) ========== */
 const SRClass = SR;
 function startRec(){
-  if(!SRClass){ setStatus('Speech recognition not supported. Use Chrome.'); return; }
-  try{ rec && rec.stop(); }catch(_){}
-  rec = new SRClass();
-  rec.lang = 'en-IN';
-  rec.interimResults = true;
-  rec.continuous = true;
+  if(!SRClass){ setStatus('Speech recognition not supported. Use Chrome.'); return; }
+  try{ rec && rec.stop(); }catch(_){}
+  rec = new SRClass();
+  rec.lang = 'en-IN';
+  rec.interimResults = true;
+  rec.continuous = false; // Changed from true for more predictable re-arming
 
-  let buffer = '', partial = '';
-  setMeter(0); setStatus('Mic On — Listening…');
+  let buffer = '', partial = '';
+  setMeter(0); setStatus('Mic On — Listening…');
 
-  rec.onresult = (e)=>{
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const txt = e.results[i][0].transcript;
-      if(e.results[i].isFinal){ buffer += txt + ' '; } else { partial = txt; }
-    }
-    const wc = (buffer.trim()+' '+partial.trim()).split(/\s+/).filter(Boolean).length;
-    setMeter(Math.min(100, Math.round(wc/12*100))); // ~12 words ≈ full
-  };
-  rec.onerror = (ev)=>{
-    setStatus('Mic Off — '+(ev.error||'error'));
-    if(ev.error==='not-allowed'){
-      alert('Please enable microphone to use this application.');
-    }
-  };
-  rec.onend = ()=>{
-    const q = buffer.trim();
-    if(!q){ setStatus('Mic Off'); setMeter(0); return; }
-    addBubble('me','<b>You:</b> '+q);
-    const a = route(q);
-    if(a){ addBubble('ai','<b>Deepa:</b> '+a); speak(a); }
-    if(!ended) setTimeout(()=>startRec(), 350); // re-arm
-  };
+  rec.onresult = (e)=>{
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const txt = e.results[i][0].transcript;
+      if(e.results[i].isFinal){ buffer += txt + ' '; } else { partial = txt; }
+    }
+    const wc = (buffer.trim()+' '+partial.trim()).split(/\s+/).filter(Boolean).length;
+    setMeter(Math.min(100, Math.round(wc/12*100))); // ~12 words ≈ full
+  };
+  rec.onerror = (ev)=>{
+    setStatus('Mic Off — '+(ev.error||'error'));
+    if(ev.error==='not-allowed'){
+      alert('Please enable microphone to use this application.');
+    }
+  };
+  rec.onend = ()=>{
+    const q = buffer.trim();
+    setMeter(0); // Reset meter on end
+    if(!q){ setStatus('Mic Off'); return; }
 
-  try{ rec.start(); }catch(e){ setStatus('Mic Off'); }
+    addBubble('me','<b>You:</b> '+q);
+    const a = route(q);
+    if(a){ addBubble('ai','<b>Deepa:</b> '+a); speak(a); }
+    
+    if(!ended) setTimeout(()=>startRec(), 350); // re-arm
+  };
+
+  try{ rec.start(); }catch(e){ setStatus('Mic Off'); }
 }
+
+// FIX: Ensure stopRec also sets ended=true to stop the re-arm loop
 function stopRec(){
-  try{ rec && rec.stop(); }catch(_){}
-  setStatus('Mic Off');
-  setMeter(0);
-  speechSynthesis.cancel();
+  try{ rec && rec.stop(); }catch(_){}
+  setStatus('Mic Off');
+  setMeter(0);
+  speechSynthesis.cancel();
+  ended = true; 
 }
 
 /* ========== Ask (typed) ========== */
 askBtn.onclick = ()=>{
-  const v = qInput.value.trim();
-  if(!v) return;
-  addBubble('me','<b>You:</b> '+v);
-  const a = route(v);
-  if(a){ addBubble('ai','<b>Deepa:</b> '+a); speak(a); }
-  qInput.value='';
-  if(!ended) setTimeout(()=>startRec(), 350);
+  const v = qInput.value.trim();
+  if(!v) return;
+  addBubble('me','<b>You:</b> '+v);
+  const a = route(v);
+  if(a){ addBubble('ai','<b>Deepa:</b> '+a); speak(a); }
+  qInput.value='';
+  
+  // Ensure recognition is restarted if it was off, but don't re-arm if session ended
+  if(!ended) {
+    stopRec(); // Stop current recognition instance
+    ended = false; // Temporarily reset flag to allow startRec
+    setTimeout(()=>startRec(), 350);
+  }
 };
 
 /* ========== First Tap → Greet (E-S-I-C) → Auto-Listen ========== */
 tapBtn.onclick = ()=>{
-  splash.style.display='none';
-  const greet = "Namaste, I am Deepa, your HR Sakhi. How can I help you today on E S I C maternity benefits?";
-  addBubble('ai','<b>Deepa:</b> '+greet.replace(/E S I C/,'ESIC'));
-  speak(greet);
+  splash.style.display='none';
+  const greet = "Namaste, I am Deepa, your HR Sakhi. How can I help you today on E S I C maternity benefits?";
+  addBubble('ai','<b>Deepa:</b> '+greet.replace(/E S I C/,'ESIC'));
+  speak(greet);
 
-  // If no response in ~6s, offer help
-  setTimeout(()=>{
-    if(chat.querySelectorAll('.me').length===0 && !ended){
-      const hint = "I can help you with the process to avail the E S I C benefits — shall I guide you through it?";
-      addBubble('ai','<b>Deepa:</b> '+hint.replace(/E S I C/,'ESIC'));
-      speak(hint);
-    }
-  }, 6000);
+  // If no response in ~6s, offer help
+  setTimeout(()=>{
+    if(chat.querySelectorAll('.me').length===0 && !ended){
+      const hint = "I can help you with the process to avail the E S I C benefits — shall I guide you through it?";
+      addBubble('ai','<b>Deepa:</b> '+hint.replace(/E S I C/,'ESIC'));
+      speak(hint);
+    }
+  }, 6000);
 
-  // auto-listen
-  setTimeout(()=>startRec(), 500);
+  // auto-listen
+  setTimeout(()=>startRec(), 500);
 };
 
-/* ========== Permissions hint ========== */
+/* ========== Permissions hint & Stop Button Hook ========== */
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='visible' && mstatus.textContent.includes('not-allowed')){
-    alert('Please enable microphone: click the lock icon in the address bar → Site settings → Microphone → Allow.');
-  }
+  if(document.visibilityState==='visible' && mstatus.textContent.includes('not-allowed')){
+    alert('Please enable microphone: click the lock icon in the address bar → Site settings → Microphone → Allow.');
+  }
 });
-
-/* preload voices */
-window.speechSynthesis.onvoiceschanged = ()=>{};
-stopBtn.onclick = stopRec;
+stopBtn.onclick = stopRec; // Already set, just confirming the fix is used
 </script>
 </body>
 </html>

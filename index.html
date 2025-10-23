@@ -1,4 +1,4 @@
-<!doctype html>
+<doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -120,4 +120,248 @@ let ended = false;
 
 /* ===== ESIC Knowledge (concise) ===== */
 const KB = {
-  steps: "Inform HRBP → Visit ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal (create password if first time) → Ensure 70 days contribution in previous two periods → Collect/submit Forms 17/18/19 (22
+  steps: "Inform HRBP → Visit ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal (create password if first time) → Ensure 70 days contribution in previous two periods → Collect/submit Forms 17/18/19 (22 only if applicable) → Apply ML in PeopleFirst as per Form 18 → After delivery, submit proofs at ESIC Branch Office within 45 days → ESIC pays 100% of average daily wages for up to 182 days.",
+  docs:  "E-Pehchan + MAC, Form 17 (declaration), Form 18 (EDD by ESIC doctor), Form 19 (leave period), Form 22 if applicable, birth certificate, Aadhaar, bank details, admission/discharge papers, employer Form-10 and children count declaration.",
+  contrib:"Contribution rates: Employer 3.25% + Employee 0.75% of wages; coverage typically up to ₹21,000/month wages (as per official notifications).",
+  overview:"ESIC provides medical care and cash benefits for sickness, maternity, employment injury, and dependent’s benefits for eligible employees."
+};
+
+/* ===== UI Helpers ===== */
+function addBubble(who, html){
+  const b = document.createElement('div');
+  b.className = 'bub ' + (who==='me'?'me':'ai');
+  b.innerHTML = html;
+  chat.appendChild(b);
+  b.scrollIntoView({behavior:'smooth',block:'end'});
+}
+function setStatus(txt){ mstatus.textContent = txt; }
+
+/* ===== Robust image loader (fix upper/lower case & extensions) ===== */
+function tryLoad(imgEl, candidates, onFail){
+  let i = 0;
+  const next = ()=>{
+    if(i >= candidates.length){ onFail && onFail(); return; }
+    const src = candidates[i++];
+    imgEl.onerror = next;
+    imgEl.onload = ()=>{ /* loaded */ };
+    imgEl.src = src;
+  };
+  next();
+}
+// Logos
+tryLoad(sakhiLogo,
+  ['sakhi_logo.png','sakhi_logo.PNG','sakhi-logo.png','Sakhi_logo.png'],
+  ()=> sakhiLogo.style.display='none'
+);
+tryLoad(jioLogo,
+  ['jio_logo_blue.png','jio_logo_blue.PNG','Jio_logo_blue.png','jio-logo-blue.png','jio_logo.png','Jio_Logo.png'],
+  ()=> jioLogo.style.display='none'
+);
+// Avatar (include common names + case/extension variants)
+tryLoad(deepaImg,
+  ['deepa_avatar.jpg','deepa_avatar.JPG','deepa_avatar.png','sakhi-photo.JPG','sakhi-photo.jpg','sakhi_photo.png','Deepa_Avatar.JPG'],
+  ()=>{ ph.style.display='block'; }
+);
+
+/* ===== Voice: pick Indian female if available ===== */
+function pickVoice(){
+  const vs = speechSynthesis.getVoices();
+  // known common names across platforms
+  const preferredNames = [
+    /heera/i, /veena/i, /zira/i, /neerja/i, /sonia/i, /salma/i, /female/i
+  ];
+  // best: en-IN & female-ish name
+  let v = vs.find(v=>/en-IN/i.test(v.lang) && preferredNames.some(r=>r.test(v.name)));
+  if(!v) v = vs.find(v=>/en-IN/i.test(v.lang));
+  if(!v) v = vs.find(v=>/English|en-/i.test(v.lang) && preferredNames.some(r=>r.test(v.name)));
+  return v || vs[0] || null;
+}
+
+/* Ensure ESIC/HRBP spelled out during speech */
+function sayAsInitialisms(text){
+  return text
+    .replace(/\bESIC\b/gi, 'E S I C')
+    .replace(/\bE-?SI\b/gi, 'E S I')
+    .replace(/\bHRBP\b/gi, 'H R B P')
+    .replace(/\bESI\b/gi,  'E S I');
+}
+
+function speak(text){
+  if(ended) return;
+  const u = new SpeechSynthesisUtterance(sayAsInitialisms(text));
+  u.voice = pickVoice();
+  u.rate = 0.96; u.pitch = 1.0; u.volume = 1.0;
+  u.onstart = ()=> mouth.classList.add('talk');
+  u.onend   = ()=> mouth.classList.remove('talk');
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+/* ===== Routing (strict to ESIC; off-scope → HRBP once) ===== */
+function route(msg){
+  const t = (msg||'').toLowerCase().trim();
+
+  if(/^(no|nope|not now|thank you|thanks|nah|ok|ok bye|bye)$/i.test(t)){
+    ended = true; speak("Dhanyavaad."); addBubble('ai','<b>Deepa:</b> Dhanyavaad.'); return;
+  }
+  const has = (...ks)=>ks.some(k=>t.includes(k));
+  if(has('step','process','apply','claim','how to')) return KB.steps;
+  if(has('doc','document','form 17','form17','form 18','form18','form 19','form19','form 22','form22','forms')) return KB.docs;
+  if(has('contribution','rate','employee contribution','employer contribution','percentage','%')) return KB.contrib;
+  if(has('what is esic','overview','esic scheme','who','benefit','benefits')) return KB.overview;
+  if(has('email','mail','send mail','send email','e-mail')){
+    if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
+    return "Let me help with ESIC guidance here.";
+  }
+  if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
+  return "I can guide ESIC maternity steps, documents and payments. Ask about steps or documents.";
+}
+
+/* ===== Live green waveform using WebAudio ===== */
+let audioCtx, analyser, dataArray, mediaStream, rafId;
+function startScope(){
+  const W = osc.clientWidth, H = osc.clientHeight;
+  const ctx = osc.getContext('2d');
+  function draw(){
+    if(!analyser){ ctx.clearRect(0,0,W,H); return; }
+    rafId = requestAnimationFrame(draw);
+    analyser.getByteTimeDomainData(dataArray);
+    ctx.clearRect(0,0,W,H);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#22c55e';
+    ctx.beginPath();
+    const slice = W / dataArray.length;
+    let x = 0;
+    for(let i=0;i<dataArray.length;i++){
+      const v = (dataArray[i]-128)/128;
+      const y = H/2 + v * (H*0.45);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      x += slice;
+    }
+    ctx.stroke();
+  }
+  draw();
+}
+async function setupAudio(){
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(mediaStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 1024;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    source.connect(analyser);
+    startScope();
+    setStatus('Mic On — Listening…');
+  }catch(e){
+    setStatus('Mic Off — Permission blocked');
+    alert('Please enable microphone: click the lock icon in the address bar → Site settings → Microphone → Allow.');
+  }
+}
+function stopAudio(){
+  if(rafId) cancelAnimationFrame(rafId);
+  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); }
+  if(audioCtx){ audioCtx.close(); }
+  analyser = null; dataArray = null; audioCtx = null; mediaStream = null;
+  const ctx = osc.getContext('2d'); ctx.clearRect(0,0,osc.clientWidth,osc.clientHeight);
+}
+
+/* ===== Speech Recognition (continuous) ===== */
+function startRec(){
+  if(!SR){ setStatus('Speech recognition not supported. Use Chrome.'); return; }
+  try{ rec && rec.stop(); }catch(_){}
+  rec = new SR();
+  rec.lang = 'en-IN';
+  rec.interimResults = true;
+  rec.continuous = true;
+
+  let buffer = '', heard = '';
+
+  rec.onstart = ()=> setStatus('Mic On — Listening…');
+  rec.onresult = (e)=>{
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const txt = e.results[i][0].transcript;
+      if(e.results[i].isFinal){ buffer += txt + ' '; }
+      else { heard = txt; }
+    }
+  };
+  rec.onerror = (ev)=>{
+    setStatus('Mic Off — '+(ev.error||'error'));
+    if(ev.error==='not-allowed'){
+      alert('Please enable microphone to use this application.');
+    }
+  };
+  rec.onend = ()=>{
+    const q = buffer.trim() || heard.trim();
+    if(!q){ if(listening) setTimeout(()=>startRec(), 250); return; }
+    addBubble('me','<b>You:</b> '+q);
+    const a = route(q);
+    if(a){ addBubble('ai','<b>Deepa:</b> '+a); speak(a); }
+    buffer=''; heard='';
+    if(listening) setTimeout(()=>startRec(), 350);
+  };
+  try{ rec.start(); }catch(_){}
+}
+function stopRec(){
+  try{ rec && rec.stop(); }catch(_){}
+}
+
+/* ===== Controls ===== */
+async function micOn(){
+  listening = true;
+  micBtn.classList.remove('off');
+  micBtn.textContent = '🎙️ Mic On';
+  micBtn.setAttribute('aria-pressed','true');
+  await setupAudio();
+  startRec();
+}
+function micOff(){
+  listening = false;
+  micBtn.classList.add('off');
+  micBtn.textContent = '🎙️ Mic Off';
+  micBtn.setAttribute('aria-pressed','false');
+  stopRec();
+  stopAudio();
+  setStatus('Mic Off');
+  speechSynthesis.cancel();
+}
+micBtn.onclick = async ()=>{
+  if(listening) micOff(); else await micOn();
+};
+stopBtn.onclick = ()=>{
+  ended = true;
+  micOff();
+  speak("Session ended. Dhanyavaad.");
+  addBubble('ai','<b>Deepa:</b> Session ended. Dhanyavaad.');
+};
+
+/* ===== First Tap → Greet → Mic permission hint ===== */
+tapBtn.onclick = ()=>{
+  splash.style.display='none';
+  const greet = "Namaste, I am Deepa, your HR Sakhi. How can I help you today on ESIC maternity benefits?";
+  addBubble('ai','<b>Deepa:</b> '+greet);
+  speak(greet);
+  // If user doesn't respond, offer guidance
+  setTimeout(()=>{
+    if(chat.querySelectorAll('.me').length===0 && !ended){
+      const hint = "I can help you with the process to avail the ESIC benefits — shall I guide you through it?";
+      addBubble('ai','<b>Deepa:</b> '+hint);
+      speak(hint);
+    }
+  }, 6000);
+  // auto-turn mic ON
+  micOn();
+};
+
+/* ===== Permissions hint when tab returns ===== */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && mstatus.textContent.includes('Permission')){
+    alert('Please enable microphone: click the lock icon in the address bar → Site settings → Microphone → Allow.');
+  }
+});
+
+/* ===== Preload voices once available ===== */
+window.speechSynthesis.onvoiceschanged = ()=>{};
+</script>
+</body>
+</html>

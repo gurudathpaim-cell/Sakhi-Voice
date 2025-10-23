@@ -7,7 +7,8 @@
 <meta name="theme-color" content="#6b46c1">
 <style>
   :root{
-    --bg1:#faf7ff; --bg2:#efe9ff; --ink:#111827; --muted:#6b7280; --brand:#6b46c1; --ok:#22c55e; --warn:#ef4444;
+    --bg1:#faf7ff; --bg2:#efe9ff; --ink:#0f172a; --muted:#6b7280;
+    --brand:#6b46c1; --ok:#22c55e;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -16,352 +17,257 @@
   /* Corner logos */
   .logos{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
   .logos img{height:40px;object-fit:contain;pointer-events:auto}
+  .logos img.hide{display:none}
 
-  /* Stage: fullscreen avatar */
-  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:10px}
-  .avatar-wrap{position:relative;width:min(100vw,760px);height:min(100vh,90vh);max-height:100vh}
-  .avatar{position:absolute;inset:0;border-radius:20px;overflow:hidden;background:#f5f0ff}
+  /* Fullscreen avatar (auto-fit) */
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .avatar-wrap{position:relative;width:100vw;height:100vh;max-width:100%;max-height:100%}
+  .avatar{position:absolute;inset:0}
   .avatar img{width:100%;height:100%;object-fit:cover;display:block}
-  .placeholder{position:absolute;inset:auto 12px 12px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;font-size:12px;color:#374151}
 
-  /* simple lipsync bar */
-  .mouth{position:absolute;left:50%;bottom:10%;width:46px;height:10px;border-radius:12px;background:var(--brand);transform:translateX(-50%) scaleX(.9);opacity:.95}
-  .talk{animation:talk .14s infinite alternate}
-  @keyframes talk{from{height:10px}to{height:18px}}
+  /* Soft professional lip-sync */
+  .mouth{position:absolute;left:50%;bottom:11%;width:46px;height:10px;border-radius:12px;background:var(--brand);
+         transform:translateX(-50%) scaleX(.85);opacity:.9;transition:height .09s ease}
+  .talk-1{height:14px}.talk-2{height:18px}.talk-3{height:22px}
 
-  /* Bottom controls */
-  .panel{position:fixed;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(180deg,transparent,rgba(250,247,255,.95) 40%);display:flex;flex-direction:column;gap:10px}
-  .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+  /* Bottom control panel */
+  .panel{position:fixed;left:0;right:0;bottom:0;padding:12px 14px;display:flex;flex-direction:column;gap:8px;
+         background:linear-gradient(180deg,transparent,rgba(250,247,255,.95) 35%);z-index:15}
+  .row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
   .btn{border:0;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;padding:10px 14px;cursor:pointer}
   .btn.secondary{background:#111827}
-  .btn.mic.off{background:#64748b}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .ask{flex:1;min-width:240px;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
+  .meter{height:6px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+  .meter>i{display:block;height:100%;width:0;background:var(--ok);transition:width .12s}
+  .status{font-size:12px;color:var(--muted);text-align:center}
 
-  /* Live mic waveform (green line) */
-  .scope{height:20px; border-radius:999px; overflow:hidden; background:#e5e7eb; position:relative}
-  .scope canvas{position:absolute;left:0;right:0;top:0;bottom:0;width:100%;height:100%}
-
-  .status{font-size:12px;color:#6b7280;text-align:center}
-
-  /* chat bubbles (kept compact; voice-only UX) */
-  .chat{max-height:28vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
-  .bub{align-self:center;max-width:min(92vw,820px);border-radius:12px;padding:8px 10px}
+  /* Minimal bubbles (optional tiny transcript) */
+  .chat{max-height:24vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+  .bub{align-self:center;max-width:min(92vw,820px);border-radius:12px;padding:6px 10px;font-size:14px}
   .me{background:#eef2ff}.ai{background:#ecfeff}
 
-  /* One-tap splash */
-  .splash{position:fixed;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+  /* Tap-to-start splash (unlocks audio/mic) */
+  .splash{position:fixed;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(6px);
+          display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
   .pill{margin-top:14px;border:1px solid #d1d5db;border-radius:999px;background:#fff;padding:10px 14px;font-weight:700;cursor:pointer}
 
-  @media (max-width:640px){
-    .logos img{height:32px}
-    .mouth{bottom:8%}
-  }
+  @media (max-width:640px){ .logos img{height:32px} }
 </style>
 </head>
 <body>
 
-<!-- Logos (auto-case fallback loader will try variants) -->
-<div class="logos">
-  <img id="sakhiLogo" alt="Sakhi logo">
-  <img id="jioLogo" alt="Jio logo">
+<!-- Logos (exact files from your repo) -->
+<div class="logos" aria-hidden="true">
+  <img src="Sakhi_logo.png" alt="Sakhi logo with original tagline" onerror="this.classList.add('hide')">
+  <img src="Jio_logo.png"   alt="Jio logo (blue)"                 onerror="this.classList.add('hide')">
 </div>
 
-<!-- Fullscreen avatar stage -->
-<div class="stage" role="main" aria-label="Deepa – HR Sakhi">
+<!-- Full-screen avatar -->
+<div class="stage" role="main" aria-label="Deepa — HR Sakhi">
   <div class="avatar-wrap">
     <div class="avatar">
-      <img id="deepaImg" alt="Deepa – HR Sakhi">
+      <img src="sakhi-photo.jpg" alt="Deepa — HR Sakhi">
       <div id="mouth" class="mouth"></div>
-      <div id="ph" class="placeholder" style="display:none">Avatar image not found. Please add <code>deepa_avatar.jpg</code> (or .JPG/.png). I’ll keep voice on.</div>
     </div>
   </div>
 </div>
 
-<!-- One-tap splash (unlocks audio/mic) -->
+<!-- Tap-to-start (required by browsers) -->
 <section id="splash" class="splash" aria-modal="true">
   <div style="font-size:20px;font-weight:900;color:#0f172a">Sakhi • Jio</div>
   <div style="font-size:13px;color:#334155">Your Digital HR Companion</div>
   <button id="tapStart" class="pill">Tap to start</button>
 </section>
 
-<!-- Bottom controls: VOICE ONLY -->
+<!-- Controls (no process text visible) -->
 <div class="panel" aria-live="polite">
   <div class="row">
-    <button id="micBtn" class="btn mic off" aria-pressed="false">🎙️ Mic Off</button>
     <button id="stopBtn" class="btn secondary">■ Stop</button>
+    <input id="q" class="ask" placeholder="Ask (e.g., ESIC maternity steps)" autocomplete="off">
+    <button id="askBtn" class="btn">Ask</button>
   </div>
-  <div class="scope"><canvas id="osc"></canvas></div>
-  <div id="mstatus" class="status">Mic Off • Permission required</div>
+  <div class="meter"><i id="mbar"></i></div>
+  <div id="mstatus" class="status">Mic Off</div>
   <div id="chat" class="chat" aria-label="Conversation"></div>
 </div>
 
 <script>
-/* ===== DOM ===== */
+/* ===== elements ===== */
 const splash  = document.getElementById('splash');
 const tapBtn  = document.getElementById('tapStart');
-const chat    = document.getElementById('chat');
 const mouth   = document.getElementById('mouth');
+const mbar    = document.getElementById('mbar');
 const mstatus = document.getElementById('mstatus');
-const micBtn  = document.getElementById('micBtn');
+const qInput  = document.getElementById('q');
+const askBtn  = document.getElementById('askBtn');
 const stopBtn = document.getElementById('stopBtn');
-const osc     = document.getElementById('osc');
-const sakhiLogo = document.getElementById('sakhiLogo');
-const jioLogo   = document.getElementById('jioLogo');
-const deepaImg  = document.getElementById('deepaImg');
-const ph        = document.getElementById('ph');
+const chat    = document.getElementById('chat');
 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec=null, ended=false, saidHRBP=false, lipTimer=0;
 
-/* ===== Session state ===== */
-let rec = null;
-let listening = false;
-let saidHRBP = false; // only once per session
-let ended = false;
-
-/* ===== ESIC Knowledge (concise) ===== */
+/* ===== ESIC knowledge (short & interactive) ===== */
 const KB = {
-  steps: "Inform HRBP → Visit ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal (create password if first time) → Ensure 70 days contribution in previous two periods → Collect/submit Forms 17/18/19 (22 only if applicable) → Apply ML in PeopleFirst as per Form 18 → After delivery, submit proofs at ESIC Branch Office within 45 days → ESIC pays 100% of average daily wages for up to 182 days.",
-  docs:  "E-Pehchan + MAC, Form 17 (declaration), Form 18 (EDD by ESIC doctor), Form 19 (leave period), Form 22 if applicable, birth certificate, Aadhaar, bank details, admission/discharge papers, employer Form-10 and children count declaration.",
-  contrib:"Contribution rates: Employer 3.25% + Employee 0.75% of wages; coverage typically up to ₹21,000/month wages (as per official notifications).",
-  overview:"ESIC provides medical care and cash benefits for sickness, maternity, employment injury, and dependent’s benefits for eligible employees."
+  overview: "E S I C offers medical care and cash benefits for eligible employees—sickness, maternity, employment injury and dependants.",
+  contrib:  "Contributions: Employer 3.25% and Employee 0.75% of wages; coverage typically up to ₹21,000 per month wages.",
+  step1:    "Step 1: Inform your HRBP of intended maternity leave dates.",
+  step2:    "Step 2: Visit the ESIC dispensary with your E-Pehchan Card and Medical Acceptance Card.",
+  step3:    "Step 3: Log in to the ESIC IP portal — if first time, create your password.",
+  step4:    "Step 4: Ensure at least 70 days contribution in the previous two contribution periods.",
+  step5:    "Step 5: Collect and submit Forms 17, 18 and 19. Form 22 only if applicable.",
+  step6:    "Step 6: Apply maternity leave in PeopleFirst as per dates on Form 18.",
+  step7:    "Step 7: After delivery, submit proofs at the ESIC Branch Office within 45 days.",
+  payment:  "Payment: E S I C pays 100% of average daily wages for up to 182 days."
 };
+const STEPS = [KB.step1,KB.step2,KB.step3,KB.step4,KB.step5,KB.step6,KB.step7,KB.payment];
 
-/* ===== UI Helpers ===== */
-function addBubble(who, html){
-  const b = document.createElement('div');
-  b.className = 'bub ' + (who==='me'?'me':'ai');
-  b.innerHTML = html;
-  chat.appendChild(b);
-  b.scrollIntoView({behavior:'smooth',block:'end'});
+/* ===== small helpers ===== */
+function addBubble(who, text){
+  const b=document.createElement('div'); b.className='bub '+(who==='me'?'me':'ai'); b.innerHTML=text;
+  chat.appendChild(b); b.scrollIntoView({behavior:'smooth',block:'end'});
 }
-function setStatus(txt){ mstatus.textContent = txt; }
+function setMeter(p){ mbar.style.width=Math.max(0,Math.min(100,p))+'%'; }
+function setStatus(t){ mstatus.textContent=t; }
 
-/* ===== Robust image loader (fix upper/lower case & extensions) ===== */
-function tryLoad(imgEl, candidates, onFail){
-  let i = 0;
-  const next = ()=>{
-    if(i >= candidates.length){ onFail && onFail(); return; }
-    const src = candidates[i++];
-    imgEl.onerror = next;
-    imgEl.onload = ()=>{ /* loaded */ };
-    imgEl.src = src;
-  };
-  next();
-}
-// Logos
-tryLoad(sakhiLogo,
-  ['sakhi_logo.png','sakhi_logo.PNG','sakhi-logo.png','Sakhi_logo.png'],
-  ()=> sakhiLogo.style.display='none'
-);
-tryLoad(jioLogo,
-  ['jio_logo_blue.png','jio_logo_blue.PNG','Jio_logo_blue.png','jio-logo-blue.png','jio_logo.png','Jio_Logo.png'],
-  ()=> jioLogo.style.display='none'
-);
-// Avatar (include common names + case/extension variants)
-tryLoad(deepaImg,
-  ['deepa_avatar.jpg','deepa_avatar.JPG','deepa_avatar.png','sakhi-photo.JPG','sakhi-photo.jpg','sakhi_photo.png','Deepa_Avatar.JPG'],
-  ()=>{ ph.style.display='block'; }
-);
-
-/* ===== Voice: pick Indian female if available ===== */
+/* ===== voice: Indian female English; force E-S-I-C pronunciation ===== */
 function pickVoice(){
-  const vs = speechSynthesis.getVoices();
-  // known common names across platforms
-  const preferredNames = [
-    /heera/i, /veena/i, /zira/i, /neerja/i, /sonia/i, /salma/i, /female/i
-  ];
-  // best: en-IN & female-ish name
-  let v = vs.find(v=>/en-IN/i.test(v.lang) && preferredNames.some(r=>r.test(v.name)));
-  if(!v) v = vs.find(v=>/en-IN/i.test(v.lang));
-  if(!v) v = vs.find(v=>/English|en-/i.test(v.lang) && preferredNames.some(r=>r.test(v.name)));
-  return v || vs[0] || null;
+  const vs=speechSynthesis.getVoices();
+  // try common female Indian/English voices first
+  return vs.find(v=>/Google UK English Female/i.test(v.name)) ||
+         vs.find(v=>/en-IN/i.test(v.lang) && /female/i.test(v.name)) ||
+         vs.find(v=>/en-IN/i.test(v.lang)) ||
+         vs.find(v=>/English/i.test(v.lang)) ||
+         vs[0];
 }
-
-/* Ensure ESIC/HRBP spelled out during speech */
-function sayAsInitialisms(text){
-  return text
-    .replace(/\bESIC\b/gi, 'E S I C')
-    .replace(/\bE-?SI\b/gi, 'E S I')
-    .replace(/\bHRBP\b/gi, 'H R B P')
-    .replace(/\bESI\b/gi,  'E S I');
+function lipsyncStart(){
+  clearInterval(lipTimer);
+  let phase=0;
+  lipTimer=setInterval(()=>{
+    phase=(phase+1)%3;
+    mouth.classList.remove('talk-1','talk-2','talk-3');
+    mouth.classList.add(phase===0?'talk-1':phase===1?'talk-2':'talk-3');
+  },110);
 }
-
+function lipsyncStop(){
+  clearInterval(lipTimer);
+  mouth.classList.remove('talk-1','talk-2','talk-3');
+}
 function speak(text){
   if(ended) return;
-  const u = new SpeechSynthesisUtterance(sayAsInitialisms(text));
-  u.voice = pickVoice();
-  u.rate = 0.96; u.pitch = 1.0; u.volume = 1.0;
-  u.onstart = ()=> mouth.classList.add('talk');
-  u.onend   = ()=> mouth.classList.remove('talk');
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  const t=text.replace(/\bESIC\b/gi,'E S I C'); // force spelling
+  const u=new SpeechSynthesisUtterance(t);
+  u.voice=pickVoice(); u.rate=0.96; u.pitch=1.0;
+  u.onstart=lipsyncStart; u.onend=lipsyncStop;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
 }
 
-/* ===== Routing (strict to ESIC; off-scope → HRBP once) ===== */
+/* ===== conversation router (short answers + offer next step) ===== */
+let stepCursor=0;
+function nextStep(){
+  const s=STEPS[stepCursor++]; if(!s){ return "Those are the key steps. Do you want me to repeat anything?"; }
+  return s+"  Shall I tell you the next step?";
+}
 function route(msg){
-  const t = (msg||'').toLowerCase().trim();
+  const q=(msg||'').trim();
+  const t=q.toLowerCase();
 
-  if(/^(no|nope|not now|thank you|thanks|nah|ok|ok bye|bye)$/i.test(t)){
-    ended = true; speak("Dhanyavaad."); addBubble('ai','<b>Deepa:</b> Dhanyavaad.'); return;
+  if(/^(no|nope|not now|thank you|thanks|ok|okay|bye|bye now|that is all)$/.test(q)){
+    ended=true; addBubble('ai','<b>Deepa:</b> Dhanyavaad.'); speak("Dhanyavaad."); return null;
   }
-  const has = (...ks)=>ks.some(k=>t.includes(k));
-  if(has('step','process','apply','claim','how to')) return KB.steps;
-  if(has('doc','document','form 17','form17','form 18','form18','form 19','form19','form 22','form22','forms')) return KB.docs;
+
+  const has=(...k)=>k.some(x=>t.includes(x));
+  if(has('what is esic','what is e s i c','overview','benefit','benefits')) return KB.overview;
   if(has('contribution','rate','employee contribution','employer contribution','percentage','%')) return KB.contrib;
-  if(has('what is esic','overview','esic scheme','who','benefit','benefits')) return KB.overview;
+  if(has('document','docs','forms','form 17','form 18','form 19','form 22')) return "Key documents are Forms 17, 18 and 19, plus E-Pehchan, MAC, birth certificate, Aadhaar and bank details. Need the steps to submit?";
+  if(has('step','process','apply','claim','how do i apply','how to apply','maternity leave')){
+    return nextStep();
+  }
   if(has('email','mail','send mail','send email','e-mail')){
-    if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
-    return "Let me help with ESIC guidance here.";
+    if(!saidHRBP){ saidHRBP=true; return "Please reach out to your HRBP for more information."; }
+    return "I can guide you on E S I C here.";
   }
-  if(!saidHRBP){ saidHRBP = true; return "Please reach out to your HRBP for more information."; }
-  return "I can guide ESIC maternity steps, documents and payments. Ask about steps or documents.";
+  if(!saidHRBP){ saidHRBP=true; return "Please reach out to your HRBP for more information."; }
+  return "I can guide E S I C maternity steps, documents and payments. Ask about steps or documents.";
 }
 
-/* ===== Live green waveform using WebAudio ===== */
-let audioCtx, analyser, dataArray, mediaStream, rafId;
-function startScope(){
-  const W = osc.clientWidth, H = osc.clientHeight;
-  const ctx = osc.getContext('2d');
-  function draw(){
-    if(!analyser){ ctx.clearRect(0,0,W,H); return; }
-    rafId = requestAnimationFrame(draw);
-    analyser.getByteTimeDomainData(dataArray);
-    ctx.clearRect(0,0,W,H);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#22c55e';
-    ctx.beginPath();
-    const slice = W / dataArray.length;
-    let x = 0;
-    for(let i=0;i<dataArray.length;i++){
-      const v = (dataArray[i]-128)/128;
-      const y = H/2 + v * (H*0.45);
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      x += slice;
-    }
-    ctx.stroke();
-  }
-  draw();
-}
-async function setupAudio(){
-  try{
-    mediaStream = await navigator.mediaDevices.getUserMedia({audio:true});
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const source = audioCtx.createMediaStreamSource(mediaStream);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 1024;
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
-    source.connect(analyser);
-    startScope();
-    setStatus('Mic On — Listening…');
-  }catch(e){
-    setStatus('Mic Off — Permission blocked');
-    alert('Please enable microphone: click the lock icon in the address bar → Site settings → Microphone → Allow.');
-  }
-}
-function stopAudio(){
-  if(rafId) cancelAnimationFrame(rafId);
-  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); }
-  if(audioCtx){ audioCtx.close(); }
-  analyser = null; dataArray = null; audioCtx = null; mediaStream = null;
-  const ctx = osc.getContext('2d'); ctx.clearRect(0,0,osc.clientWidth,osc.clientHeight);
-}
-
-/* ===== Speech Recognition (continuous) ===== */
+/* ===== speech recognition (auto listen + green bar) ===== */
+const SRClass = SR;
+let recActive=false;
 function startRec(){
-  if(!SR){ setStatus('Speech recognition not supported. Use Chrome.'); return; }
+  if(!SRClass){ setStatus('Speech recognition not supported. Use Chrome.'); return; }
   try{ rec && rec.stop(); }catch(_){}
-  rec = new SR();
-  rec.lang = 'en-IN';
-  rec.interimResults = true;
-  rec.continuous = true;
+  rec=new SRClass(); rec.lang='en-IN'; rec.interimResults=true; rec.continuous=true;
+  let buffer='', partial=''; recActive=true;
+  setMeter(0); setStatus('Mic On — Listening…');
 
-  let buffer = '', heard = '';
-
-  rec.onstart = ()=> setStatus('Mic On — Listening…');
-  rec.onresult = (e)=>{
+  rec.onresult=(e)=>{
     for(let i=e.resultIndex;i<e.results.length;i++){
-      const txt = e.results[i][0].transcript;
-      if(e.results[i].isFinal){ buffer += txt + ' '; }
-      else { heard = txt; }
+      const txt=e.results[i][0].transcript;
+      if(e.results[i].isFinal){ buffer+=txt+' '; } else { partial=txt; }
     }
+    const wc=(buffer.trim()+' '+partial.trim()).split(/\s+/).filter(Boolean).length;
+    setMeter(Math.min(100,Math.round(wc/12*100)));
   };
-  rec.onerror = (ev)=>{
-    setStatus('Mic Off — '+(ev.error||'error'));
-    if(ev.error==='not-allowed'){
-      alert('Please enable microphone to use this application.');
-    }
+  rec.onerror=(ev)=>{
+    recActive=false; setStatus('Mic Off — '+(ev.error||'error'));
+    if(ev.error==='not-allowed'){ alert('Please enable microphone to use this application.'); }
   };
-  rec.onend = ()=>{
-    const q = buffer.trim() || heard.trim();
-    if(!q){ if(listening) setTimeout(()=>startRec(), 250); return; }
+  rec.onend=()=>{
+    recActive=false;
+    const q=buffer.trim();
+    if(!q){ setStatus('Mic Off'); setMeter(0); return; }
     addBubble('me','<b>You:</b> '+q);
-    const a = route(q);
-    if(a){ addBubble('ai','<b>Deepa:</b> '+a); speak(a); }
-    buffer=''; heard='';
-    if(listening) setTimeout(()=>startRec(), 350);
+    const a=route(q);
+    if(a){ addBubble('ai','<b>Deepa:</b> '+a.replace(/E S I C/g,'ESIC')); speak(a); }
+    if(!ended) setTimeout(()=>startRec(),350);
   };
-  try{ rec.start(); }catch(_){}
+
+  try{ rec.start(); }catch(e){ setStatus('Mic Off'); }
 }
 function stopRec(){
   try{ rec && rec.stop(); }catch(_){}
+  recActive=false; setStatus('Mic Off'); setMeter(0); speechSynthesis.cancel();
 }
 
-/* ===== Controls ===== */
-async function micOn(){
-  listening = true;
-  micBtn.classList.remove('off');
-  micBtn.textContent = '🎙️ Mic On';
-  micBtn.setAttribute('aria-pressed','true');
-  await setupAudio();
-  startRec();
-}
-function micOff(){
-  listening = false;
-  micBtn.classList.add('off');
-  micBtn.textContent = '🎙️ Mic Off';
-  micBtn.setAttribute('aria-pressed','false');
-  stopRec();
-  stopAudio();
-  setStatus('Mic Off');
-  speechSynthesis.cancel();
-}
-micBtn.onclick = async ()=>{
-  if(listening) micOff(); else await micOn();
-};
-stopBtn.onclick = ()=>{
-  ended = true;
-  micOff();
-  speak("Session ended. Dhanyavaad.");
-  addBubble('ai','<b>Deepa:</b> Session ended. Dhanyavaad.');
+/* ===== typed Ask ===== */
+askBtn.onclick=()=>{
+  const v=qInput.value.trim(); if(!v) return;
+  addBubble('me','<b>You:</b> '+v);
+  const a=route(v);
+  if(a){ addBubble('ai','<b>Deepa:</b> '+a.replace(/E S I C/g,'ESIC')); speak(a); }
+  qInput.value=''; if(!ended) setTimeout(()=>startRec(),350);
 };
 
-/* ===== First Tap → Greet → Mic permission hint ===== */
-tapBtn.onclick = ()=>{
+/* ===== first tap → greet → wait → fallback → auto-listen ===== */
+tapBtn.onclick=()=>{
   splash.style.display='none';
-  const greet = "Namaste, I am Deepa, your HR Sakhi. How can I help you today on ESIC maternity benefits?";
-  addBubble('ai','<b>Deepa:</b> '+greet);
-  speak(greet);
-  // If user doesn't respond, offer guidance
+  stepCursor=0; // reset steps each session
+  const greet="Namaste, I am Deepa, your HR Sakhi. How can I help you today on E S I C maternity benefits?";
+  addBubble('ai','<b>Deepa:</b> '+greet.replace(/E S I C/,'ESIC')); speak(greet);
+
+  // If silent after 6s, offer to guide
   setTimeout(()=>{
     if(chat.querySelectorAll('.me').length===0 && !ended){
-      const hint = "I can help you with the process to avail the ESIC benefits — shall I guide you through it?";
-      addBubble('ai','<b>Deepa:</b> '+hint);
-      speak(hint);
+      const hint="I can help you with the process to avail the E S I C benefits — shall I guide you through it?";
+      addBubble('ai','<b>Deepa:</b> '+hint.replace(/E S I C/,'ESIC')); speak(hint);
     }
-  }, 6000);
-  // auto-turn mic ON
-  micOn();
+  },6000);
+
+  setTimeout(()=>startRec(),550);
 };
 
-/* ===== Permissions hint when tab returns ===== */
+/* ===== controls ===== */
+stopBtn.onclick=stopRec;
+
+/* ===== permissions reminder ===== */
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='visible' && mstatus.textContent.includes('Permission')){
+  if(document.visibilityState==='visible' && mstatus.textContent.includes('not-allowed')){
     alert('Please enable microphone: click the lock icon in the address bar → Site settings → Microphone → Allow.');
   }
 });
 
-/* ===== Preload voices once available ===== */
-window.speechSynthesis.onvoiceschanged = ()=>{};
+/* preload voices */
+window.speechSynthesis.onvoiceschanged=()=>{};
 </script>
 </body>
 </html>

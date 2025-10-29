@@ -7,15 +7,25 @@
 <meta name="theme-color" content="#6b46c1">
 <style>
 :root{--bg1:#faf7ff;--bg2:#efe9ff;--ink:#111827;--muted:#6b7280;--brand:#6b46c1;--ok:#22c55e}
-html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));font-family:system-ui,Segoe UI,Roboto,Arial;color:var(--ink)}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial}
+
+/* logos */
 .logos{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:20}
 .logos img{height:40px;object-fit:contain}
-.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+
+/* stage */
+.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:10px}
 .avatar-wrap{position:relative;width:min(100vw,760px);height:min(100vh,90vh)}
 .avatar{position:absolute;inset:0;border-radius:20px;overflow:hidden;background:#f5f0ff}
 .avatar img{width:100%;height:100%;object-fit:cover}
+
+/* simple lipsync */
 .mouth{position:absolute;left:50%;bottom:9%;width:44px;height:10px;border-radius:12px;background:var(--brand);transform:translateX(-50%);opacity:.9}
-.talk{animation:talk .14s infinite alternate}@keyframes talk{from{height:10px}to{height:18px}}
+.talk{animation:talk .14s infinite alternate}
+@keyframes talk{from{height:10px}to{height:18px}}
+
+/* controls */
 .panel{position:fixed;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(180deg,transparent,rgba(250,247,255,.95) 40%);display:flex;flex-direction:column;gap:8px}
 .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .btn{border:0;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;padding:10px 14px;cursor:pointer}
@@ -26,87 +36,138 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(
 .chat{max-height:26vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
 .bub{align-self:center;max-width:min(92vw,820px);border-radius:12px;padding:6px 10px}
 .me{background:#eef2ff}.ai{background:#ecfeff}
+
+/* splash */
 .splash{position:fixed;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
 .pill{margin-top:14px;border:1px solid #d1d5db;border-radius:999px;background:#fff;padding:10px 14px;font-weight:700;cursor:pointer}
+
 @media(max-width:640px){.logos img{height:32px}}
 </style>
 </head>
 <body>
 
+<!-- Logos use EXACT filenames from your repo -->
 <div class="logos">
-  <img id="sakhiLogo" src="sakhi_logo.png" alt="Sakhi logo">
-  <img id="jioLogo" src="jio_logo_blue.png" alt="Jio logo">
+  <img id="sakhiLogo" src="Sakhi_logo.png" alt="Sakhi logo">
+  <img id="jioLogo"   src="JIo_logo.png"   alt="Jio logo">
 </div>
 
-<div class="stage">
+<!-- Fullscreen avatar -->
+<div class="stage" role="main" aria-label="Deepa – HR Sakhi">
   <div class="avatar-wrap">
     <div class="avatar">
-      <img id="deepaImg" src="sakhi-photo.JPG" alt="Deepa — HR Sakhi">
+      <!-- EXACT filename from your repo -->
+      <img id="deepaImg" src="sakhi-photo.jpg" alt="Deepa — HR Sakhi">
       <div id="mouth" class="mouth"></div>
     </div>
   </div>
 </div>
 
-<section id="splash" class="splash">
+<!-- One-tap to unlock audio -->
+<section id="splash" class="splash" aria-modal="true">
   <div style="font-weight:900;font-size:20px">Sakhi • Jio</div>
   <div style="font-size:13px;color:#334155">Your Digital HR Companion</div>
   <button id="tapStart" class="pill">Tap to Start</button>
 </section>
 
-<div class="panel">
+<!-- Voice-only controls -->
+<div class="panel" aria-live="polite">
   <div class="row">
-    <button id="micBtn" class="btn off">🎙️ Mic Off</button>
+    <button id="micBtn" class="btn off" aria-pressed="false">🎙️ Mic Off</button>
   </div>
   <div class="scope"><canvas id="osc"></canvas></div>
   <div id="mstatus" class="status">Mic Off • Permission required</div>
-  <div id="chat" class="chat"></div>
+  <div id="chat" class="chat" aria-label="Conversation"></div>
 </div>
 
 <script>
-const splash=document.getElementById('splash'),tapBtn=document.getElementById('tapStart'),
-chat=document.getElementById('chat'),mouth=document.getElementById('mouth'),
-micBtn=document.getElementById('micBtn'),mstatus=document.getElementById('mstatus'),
-osc=document.getElementById('osc');const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+/* ===== DOM ===== */
+const splash  = document.getElementById('splash');
+const tapBtn  = document.getElementById('tapStart');
+const chat    = document.getElementById('chat');
+const mouth   = document.getElementById('mouth');
+const mstatus = document.getElementById('mstatus');
+const micBtn  = document.getElementById('micBtn');
+const osc     = document.getElementById('osc');
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+/* ===== Session state ===== */
 let rec=null,listening=false,ended=false,saidHRBP=false;
+
+/* ===== ESIC KB ===== */
 const KB={
- steps:"Inform HRBP → Visit ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal (create password if first time) → Ensure 70 days contribution → Submit Forms 17/18/19 → Apply ML in PeopleFirst → After delivery submit proofs within 45 days → ESIC pays 100% of wages for 182 days.",
- docs:"E-Pehchan + MAC, Form 17, Form 18, Form 19, Form 22 (if applicable), birth certificate, Aadhaar, bank details, employer Form-10.",
- contrib:"Employer 3.25% + Employee 0.75% of wages; coverage ≤ ₹21 000/month.",
- overview:"ESIC provides medical care and cash benefits for sickness, maternity and injury."
+  steps:"Inform HRBP → Visit ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal (create password if first time) → Ensure 70 days contribution → Submit Forms 17/18/19 (22 if applicable) → Apply ML in PeopleFirst → After delivery submit proofs within 45 days → ESIC pays 100% of average daily wages for up to 182 days.",
+  docs:"E-Pehchan + MAC, Form 17 (declaration), Form 18 (EDD), Form 19 (leave), Form 22 (if applicable), birth certificate, Aadhaar, bank details, employer Form-10.",
+  contrib:"Employer 3.25% + Employee 0.75% of wages; coverage typically up to ₹21,000/month.",
+  overview:"ESIC provides medical care and cash benefits for sickness, maternity, employment injury, and dependent’s benefits."
 };
-function addBubble(w,t){const b=document.createElement('div');b.className='bub '+(w==='me'?'me':'ai');b.innerHTML=t;chat.appendChild(b);b.scrollIntoView({behavior:'smooth',block:'end'});}
+
+/* ===== UI Helpers ===== */
+function addBubble(w,html){const b=document.createElement('div');b.className='bub '+(w==='me'?'me':'ai');b.innerHTML=html;chat.appendChild(b);b.scrollIntoView({behavior:'smooth',block:'end'});}
 function setStatus(t){mstatus.textContent=t;}
+
+/* ===== Voice (force initialisms) ===== */
 function pickVoice(){const vs=speechSynthesis.getVoices();return vs.find(v=>/en-IN/i.test(v.lang)&&/female/i.test(v.name))||vs.find(v=>/en-IN/i.test(v.lang))||vs[0];}
 function sayLetters(t){return t.replace(/\bESIC\b/gi,'E S I C').replace(/\bESI\b/gi,'E S I').replace(/\bHRBP\b/gi,'H R B P');}
-function speak(t){if(ended)return;const u=new SpeechSynthesisUtterance(sayLetters(t));u.voice=pickVoice();u.rate=0.96;u.onstart=()=>mouth.classList.add('talk');u.onend=()=>mouth.classList.remove('talk');speechSynthesis.cancel();speechSynthesis.speak(u);}
-function route(m){const t=m.toLowerCase();if(/^(bye|thank|thanks|ok)$/i.test(t)){ended=true;speak('Dhanyavaad.');addBubble('ai','<b>Deepa:</b> Dhanyavaad.');return;}
-const has=(...k)=>k.some(x=>t.includes(x));
-if(has('step','process','apply','claim'))return KB.steps;
-if(has('doc','form'))return KB.docs;
-if(has('contribution','rate'))return KB.contrib;
-if(has('overview','what is esic','benefit'))return KB.overview;
-if(!saidHRBP){saidHRBP=true;return 'Please reach out to your HRBP for more information.';}
-return 'I can guide E S I C maternity steps, documents and payments.';}
-/* mic + waveform */
-let audioCtx,analyser,dataArray,mediaStream,raf;
-async function startAudio(){try{mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});
-audioCtx=new (window.AudioContext||window.webkitAudioContext)();const src=audioCtx.createMediaStreamSource(mediaStream);
-analyser=audioCtx.createAnalyser();analyser.fftSize=512;dataArray=new Uint8Array(analyser.frequencyBinCount);src.connect(analyser);
-const ctx=osc.getContext('2d');const W=osc.width=osc.clientWidth,H=osc.height=osc.clientHeight;
-function draw(){raf=requestAnimationFrame(draw);analyser.getByteTimeDomainData(dataArray);
-ctx.clearRect(0,0,W,H);ctx.beginPath();ctx.strokeStyle='#22c55e';ctx.lineWidth=2;let x=0,slice=W/dataArray.length;
-for(let i=0;i<dataArray.length;i++){const v=(dataArray[i]-128)/128,y=H/2+v*H*0.45;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);x+=slice;}
-ctx.stroke();}draw();}catch(e){alert('Please allow microphone access.');}}
-function stopAudio(){if(raf)cancelAnimationFrame(raf);if(mediaStream)mediaStream.getTracks().forEach(t=>t.stop());if(audioCtx)audioCtx.close();}
-function startRec(){if(!SR)return;try{rec&&rec.stop();}catch{}rec=new SR();rec.lang='en-IN';rec.continuous=true;
-let buf='';rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)buf+=e.results[i][0].transcript+'  ';}}
-rec.onend=()=>{const q=buf.trim();if(!q)return;if(!ended){addBubble('me','<b>You:</b> '+q);const a=route(q);addBubble('ai','<b>Deepa:</b> '+a);speak(a);setTimeout(()=>startRec(),400);}buf='';};
-try{rec.start();}catch{}}
-function micOn(){listening=true;micBtn.classList.remove('off');micBtn.textContent='🎙️ Mic On';setStatus('Mic On — Listening…');startAudio();startRec();}
-function micOff(){listening=false;micBtn.classList.add('off');micBtn.textContent='🎙️ Mic Off';setStatus('Mic Off');stopAudio();try{rec&&rec.stop();}catch{}speechSynthesis.cancel();}
+function speak(text){if(ended)return;const u=new SpeechSynthesisUtterance(sayLetters(text));u.voice=pickVoice();u.rate=0.96;u.onstart=()=>mouth.classList.add('talk');u.onend=()=>mouth.classList.remove('talk');speechSynthesis.cancel();speechSynthesis.speak(u);}
+
+/* ===== Router ===== */
+function route(msg){
+  const t=(msg||'').toLowerCase().trim();
+  if(/^(bye|thank|thanks|ok|ok bye)$/i.test(t)){ended=true;speak('Dhanyavaad.');addBubble('ai','<b>Deepa:</b> Dhanyavaad.');return;}
+  const has=(...k)=>k.some(x=>t.includes(x));
+  if(has('step','process','apply','claim'))return KB.steps;
+  if(has('doc','form','form 17','form 18','form 19','form 22'))return KB.docs;
+  if(has('contribution','rate','%'))return KB.contrib;
+  if(has('overview','what is esic','benefit'))return KB.overview;
+  if(!saidHRBP){saidHRBP=true;return 'Please reach out to your HRBP for more information.';}
+  return 'I can guide E S I C maternity steps, documents and payments.';
+}
+
+/* ===== Waveform (WebAudio) ===== */
+let audioCtx,analyser,dataArray,mediaStream,rafId;
+async function startAudio(){
+  try{
+    mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=audioCtx.createMediaStreamSource(mediaStream);
+    analyser=audioCtx.createAnalyser();analyser.fftSize=1024;dataArray=new Uint8Array(analyser.frequencyBinCount);src.connect(analyser);
+    const ctx=osc.getContext('2d'),W=osc.width=osc.clientWidth,H=osc.height=osc.clientHeight;
+    (function draw(){rafId=requestAnimationFrame(draw);analyser.getByteTimeDomainData(dataArray);
+      ctx.clearRect(0,0,W,H);ctx.beginPath();ctx.strokeStyle='#22c55e';ctx.lineWidth=2;
+      let x=0,slice=W/dataArray.length;for(let i=0;i<dataArray.length;i++){const v=(dataArray[i]-128)/128,y=H/2+v*(H*0.45);i?ctx.lineTo(x,y):ctx.moveTo(x,y);x+=slice;}
+      ctx.stroke();})();
+    setStatus('Mic On — Listening…');
+  }catch(e){
+    setStatus('Mic Off — Permission blocked');
+    alert('Please enable microphone: click the lock icon → Site settings → Microphone → Allow.');
+  }
+}
+function stopAudio(){if(rafId)cancelAnimationFrame(rafId);if(mediaStream)mediaStream.getTracks().forEach(t=>t.stop());if(audioCtx)audioCtx.close();}
+
+/* ===== Speech Recognition ===== */
+function startRec(){
+  if(!SR){setStatus('Speech recognition not supported. Use Chrome.');return;}
+  try{rec&&rec.stop();}catch{}
+  rec=new SR();rec.lang='en-IN';rec.interimResults=true;rec.continuous=true;
+  let buffer='',heard='';
+  rec.onstart=()=>setStatus('Mic On — Listening…');
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const txt=e.results[i][0].transcript;e.results[i].isFinal?buffer+=txt+' ':heard=txt;}}
+  rec.onend=()=>{const q=(buffer.trim()||heard.trim());if(q){addBubble('me','<b>You:</b> '+q);const a=route(q);addBubble('ai','<b>Deepa:</b> '+a);speak(a);}buffer='';heard='';if(listening&&!ended)setTimeout(startRec,350);};
+  try{rec.start();}catch{}
+}
+function stopRec(){try{rec&&rec.stop();}catch{}}
+
+/* ===== Controls ===== */
+async function micOn(){listening=true;micBtn.classList.remove('off');micBtn.textContent='🎙️ Mic On';micBtn.setAttribute('aria-pressed','true');await startAudio();startRec();}
+function micOff(){listening=false;micBtn.classList.add('off');micBtn.textContent='🎙️ Mic Off';micBtn.setAttribute('aria-pressed','false');stopRec();stopAudio();setStatus('Mic Off');speechSynthesis.cancel();}
 micBtn.onclick=()=>{listening?micOff():micOn();};
-tapBtn.onclick=()=>{splash.style.display='none';const g='Namaste, I am Deepa, your HR Sakhi. How can I help you today on E S I C maternity benefits?';
-addBubble('ai','<b>Deepa:</b> '+g);speak(g);setTimeout(()=>micOn(),1000);}
+
+/* ===== First Tap ===== */
+tapBtn.onclick=()=>{splash.style.display='none';const g='Namaste, I am Deepa, your HR Sakhi. How can I help you today on E S I C maternity benefits?';addBubble('ai','<b>Deepa:</b> '+g);speak(g);setTimeout(micOn,800);};
+
+/* ===== Voice preload ===== */
 window.speechSynthesis.onvoiceschanged=()=>{};
 </script>
 </body>

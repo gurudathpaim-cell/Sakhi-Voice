@@ -1,18 +1,24 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Deepa — HR Sakhi</title>
-<meta name="theme-color" content="#6b46c1" />
+<meta name="theme-color" content="#6b46c1">
 <style>
 :root{--bg1:#faf7ff;--bg2:#efe9ff;--ink:#111827;--muted:#6b7280;--brand:#6b46c1;--ok:#22c55e}
 *{box-sizing:border-box} html,body{height:100%}
 body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial}
 
-/* logos */
-.logos{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:20}
-.logos img{height:40px;object-fit:contain}
+/* logos + gear */
+.topbar{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:30}
+.topbar img{height:40px;object-fit:contain}
+.gear{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid #c7c8d1;background:#fff;cursor:pointer}
+
+/* voice panel */
+.vpanel{position:fixed;top:54px;left:10px;z-index:40;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px;display:none;gap:6px}
+.vpanel label{font-size:12px;color:#374151}
+.vpanel select{min-width:260px}
 
 /* stage */
 .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:10px}
@@ -21,20 +27,21 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
 .avatar img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
 
 /* lipsync */
-.mouth{position:absolute;left:50%;bottom:12%;width:56px;height:12px;border-radius:14px;background:rgba(107,70,193,.95);
-       transform:translateX(-50%);box-shadow:0 0 10px rgba(107,70,193,.45)}
-.talk{animation:talk .12s infinite alternate}
-@keyframes talk{from{height:12px}to{height:22px}}
+.mouth{position:absolute;left:50%;bottom:18%; /* raised so panel never covers */
+       width:60px;height:12px;border-radius:14px;background:rgba(107,70,193,.96);
+       transform:translateX(-50%);box-shadow:0 0 10px rgba(107,70,193,.45);z-index:25}
+.talk{animation:talk .11s infinite alternate}
+@keyframes talk{from{height:12px}to{height:24px}}
 
-/* controls */
-.panel{position:fixed;left:0;right:0;bottom:0;padding:12px;background:linear-gradient(180deg,transparent,rgba(250,247,255,.95) 40%);
+/* panel */
+.panel{position:fixed;left:0;right:0;bottom:0;padding:10px;background:linear-gradient(180deg,transparent,rgba(250,247,255,.94) 40%);
        display:flex;flex-direction:column;gap:8px}
 .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .btn{border:0;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;padding:10px 14px;cursor:pointer}
 .btn.off{background:#6b7280}
 .scope{height:8px;border-radius:999px;overflow:hidden;background:#e5e7eb}
 .scope canvas{width:100%;height:100%}
-.status{font-size:12px;color:var(--muted);text-align:center}
+.status{font-size:12px;color:#6b7280;text-align:center}
 .chat{max-height:26vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
 .bub{align-self:center;max-width:min(92vw,820px);border-radius:12px;padding:6px 10px}
 .me{background:#eef2ff}.ai{background:#ecfeff}
@@ -44,17 +51,27 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
         display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
 .pill{margin-top:14px;border:1px solid #d1d5db;border-radius:999px;background:#fff;padding:10px 14px;font-weight:700;cursor:pointer}
 
-@media(max-width:640px){.logos img{height:32px}}
+@media(max-width:640px){.topbar img{height:32px}}
 </style>
 </head>
 <body>
-<!-- Logos -->
-<div class="logos">
+<div class="topbar">
   <img src="Sakhi_logo.png" alt="Sakhi logo">
-  <img src="JIo_logo.png" alt="Jio logo">
+  <div style="display:flex;gap:8px;align-items:center">
+    <button id="voiceBtn" class="gear">⚙️ Voice</button>
+    <img src="JIo_logo.png" alt="Jio logo">
+  </div>
 </div>
 
-<!-- Avatar -->
+<!-- voice chooser -->
+<div id="vpanel" class="vpanel">
+  <div>
+    <label for="vsel">Choose voice (prefer en-IN female):</label><br>
+    <select id="vsel"></select>
+  </div>
+</div>
+
+<!-- stage -->
 <div class="stage" role="main" aria-label="Deepa – HR Sakhi">
   <div class="avatar-wrap">
     <div class="avatar">
@@ -64,14 +81,14 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
   </div>
 </div>
 
-<!-- Tap to start -->
+<!-- splash -->
 <section id="splash" class="splash" aria-modal="true">
   <div style="font-weight:900;font-size:20px">Sakhi • Jio</div>
   <div style="font-size:13px;color:#334155">Your Digital HR Companion</div>
   <button id="tapStart" class="pill">Tap to Start</button>
 </section>
 
-<!-- Panel -->
+<!-- bottom panel -->
 <div class="panel" aria-live="polite">
   <div class="row"><button id="micBtn" class="btn off" aria-pressed="false">🎙️ Mic Off</button></div>
   <div class="scope"><canvas id="osc"></canvas></div>
@@ -80,174 +97,151 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
 </div>
 
 <script>
-/* ===== DOM ===== */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+/* DOM */
+const voiceBtn=document.getElementById('voiceBtn');
+const vpanel=document.getElementById('vpanel');
+const vsel=document.getElementById('vsel');
 const splash=document.getElementById('splash');
 const tapBtn=document.getElementById('tapStart');
+const micBtn=document.getElementById('micBtn');
 const chat=document.getElementById('chat');
 const mouth=document.getElementById('mouth');
 const mstatus=document.getElementById('mstatus');
-const micBtn=document.getElementById('micBtn');
 const osc=document.getElementById('osc');
 
-/* ===== State ===== */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let rec=null,listening=false,ended=false,saidHRBP=false,voicesReady=false;
+/* State */
+let rec=null,listening=false,ended=false,saidHRBP=false,selectedVoiceName=localStorage.getItem('sakhi_voice')||'';
+let audioCtx,analyser,dataArray,mediaStream,rafId,lastVoice=Date.now();
 
-/* ===== ESIC – compact knowledge ===== */
+/* ESIC compact KB */
 const KB={
-  steps:"Steps: Inform HRBP → ESIC dispensary with E-Pehchan & MAC → Login ESIC IP portal → Check 70 days contribution → Submit Forms 17/18/19 (22 if appl.) → Apply ML in PeopleFirst → After delivery submit proofs in 45 days → ESIC pays up to 182 days.",
-  docs:"Docs: E-Pehchan, MAC, Form-17 (decl), Form-18 (EDD), Form-19 (leave), Form-22 (if appl.), birth cert, Aadhaar, bank details, employer Form-10.",
+  steps:"Steps: Inform HRBP → ESIC dispensary (E-Pehchan, MAC) → IP portal login → Check 70-day contribution → Submit Forms 17/18/19 (22 if appl.) → Apply ML in PeopleFirst → After delivery submit proofs in 45 days → ESIC pays up to 182 days.",
+  docs:"Docs: E-Pehchan, MAC, Form-17 (declaration), Form-18 (EDD), Form-19 (leave), Form-22 (if appl.), birth cert, Aadhaar, bank details, employer Form-10.",
   rates:"Rates: Employer 3.25% + Employee 0.75% of wages (coverage typically ≤ ₹21,000/month).",
-  eligibility:"Eligibility: Insured person with ≥ 70 days contribution in the two preceding contribution periods under ESIC.",
-  days:"Maternity benefit: up to 182 days paid at 100% avg daily wage (per ESIC rules).",
-  portal:"Portal: Insured Person (IP) login → create password on first use.",
+  eligibility:"Eligibility: ≥ 70 days contribution in the two preceding contribution periods.",
+  days:"Maternity benefit: up to 182 days at 100% average daily wage (as per ESIC).",
+  portal:"Portal: IP login; create password on first use.",
   branch:"Branch office: submit post-delivery proofs within 45 days for cash benefit.",
-  overview:"ESIC covers medical care + cash benefits for sickness, maternity, employment injury & dependants."
+  overview:"ESIC provides medical + cash benefits (sickness, maternity, injury, dependants)."
 };
 
-/* ===== Chat helpers ===== */
 function addBubble(w,html){const b=document.createElement('div');b.className='bub '+(w==='me'?'me':'ai');b.innerHTML=html;chat.appendChild(b);b.scrollIntoView({behavior:'smooth',block:'end'});}
 
-/* ===== Voice utilities ===== */
-function waitForVoices(timeout=1500){
-  return new Promise(res=>{
-    const t=setTimeout(()=>res(),timeout);
-    window.speechSynthesis.onvoiceschanged=()=>{clearTimeout(t);res();};
+/* Voice list + selection */
+function populateVoices(){
+  const vs=speechSynthesis.getVoices();
+  vsel.innerHTML='';
+  // sort: en-IN female first
+  const score=v=>{
+    let s=0;
+    if(/en-IN/i.test(v.lang)) s+=5;
+    if(/female/i.test(v.name)) s+=3;
+    if(/Neerja|Sangeeta/i.test(v.name)) s+=6;
+    return -s;
+  };
+  vs.sort((a,b)=>score(a)-score(b));
+  vs.forEach(v=>{
+    const opt=document.createElement('option');
+    opt.value=v.name; opt.textContent=`${v.name} — ${v.lang}`;
+    if(v.name===selectedVoiceName) opt.selected=true;
+    vsel.appendChild(opt);
   });
 }
+speechSynthesis.onvoiceschanged=populateVoices;
+
+voiceBtn.onclick=()=>{vpanel.style.display=vpanel.style.display?'':'flex';};
+vsel.onchange=()=>{selectedVoiceName=vsel.value; localStorage.setItem('sakhi_voice',selectedVoiceName);};
+
+/* TTS */
+function sayLetters(t){return t.replace(/\bESIC\b/gi,'E S I C').replace(/\bESI\b/gi,'E S I').replace(/\bHRBP\b/gi,'H R B P');}
 function pickVoice(){
   const vs=speechSynthesis.getVoices();
-  const pref=[
-    /Neerja/i,                                   // Microsoft Neerja (female, en-IN)
-    /Sangeeta/i,                                 // another en-IN female on some devices
-    /en-IN.*female/i,
-    /English.*India/i,
-    /en-IN/i
-  ];
-  for(const p of pref){const v=vs.find(v=>p.test((v.name||'')+' '+(v.lang||''))); if(v) return v;}
-  return vs[0]||null;
+  if(selectedVoiceName){
+    const v=vs.find(x=>x.name===selectedVoiceName);
+    if(v) return v;
+  }
+  // fallback preference
+  return vs.find(v=>/Neerja|Sangeeta/i.test(v.name)) ||
+         vs.find(v=>/en-IN/i.test(v.lang) && /female/i.test(v.name)) ||
+         vs.find(v=>/en-IN/i.test(v.lang)) ||
+         vs[0] || null;
 }
-function sayLetters(t){return t.replace(/\bESIC\b/gi,'E S I C').replace(/\bESI\b/gi,'E S I').replace(/\bHRBP\b/gi,'H R B P');}
-async function speak(text){
+function speak(text){
   if(ended) return;
-  if(!voicesReady){await waitForVoices(); voicesReady=true;}
   const u=new SpeechSynthesisUtterance(sayLetters(text));
-  u.voice=pickVoice();
-  u.rate=0.98; u.pitch=1.1; u.volume=1;
+  const v=pickVoice();
+  if(v) u.voice=v;
+  u.rate=0.98; u.pitch= v && /en-IN/i.test(v.lang) ? 1.05 : 1.15; // lift pitch if fallback
   u.onstart=()=>mouth.classList.add('talk');
-  u.onend=()=>mouth.classList.remove('talk');
+  u.onend =()=>mouth.classList.remove('talk');
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
-/* ===== Intent router (brief answers only) ===== */
+/* Router — concise only */
 function route(q){
   const t=(q||'').toLowerCase();
   const has=(...ks)=>ks.some(k=>t.includes(k));
-  if(/^(bye|thank(s)?|ok(ay)?|ok bye)$/i.test(q.trim())){ended=true; return "Dhanyavaad.";}
-
-  // Direct intents
-  if(has('step','process','how to','apply','claim'))   return KB.steps;
-  if(has('doc','document','form 17','form18','form 18','form 19','form19','form 22','form22')) return KB.docs;
-  if(has('rate','percentage','contribution','%'))      return KB.rates;
-  if(has('eligib','qualif'))                           return KB.eligibility;
-  if(has('days','duration','182'))                     return KB.days;
-  if(has('portal','login','password'))                 return KB.portal;
-  if(has('branch','where submit','submit proofs'))     return KB.branch;
-  if(has('overview','what is esic','benefit'))         return KB.overview;
-
-  // If it's clearly ESIC but vague, prompt with options (no essay)
-  if(has('esic','e s i c','esi')){
-    return "I can help with: steps, documents, rates, eligibility, days, portal or branch office. Which one?";
-  }
-
-  // Off-scope → HRBP once
-  if(!saidHRBP){ saidHRBP=true; return "Please reach out to your HRBP for more information."; }
-  return "Ask me about ESIC steps, documents, rates, eligibility, days, portal, or branch office.";
+  if(/^(bye|thank(s)?|ok(ay)?|ok bye)$/i.test(q.trim())){ended=true;return 'Dhanyavaad.';}
+  if(has('step','process','how to','apply','claim'))return KB.steps;
+  if(has('doc','document','form 17','form18','form 18','form 19','form19','form 22','form22'))return KB.docs;
+  if(has('rate','percentage','contribution','%'))return KB.rates;
+  if(has('eligib','qualif'))return KB.eligibility;
+  if(has('days','duration','182'))return KB.days;
+  if(has('portal','login','password'))return KB.portal;
+  if(has('branch','submit proofs'))return KB.branch;
+  if(has('overview','what is esic','benefit'))return KB.overview;
+  if(has('esic','e s i c','esi')) return 'Which one: steps, documents, rates, eligibility, days, portal or branch office?';
+  if(!saidHRBP){saidHRBP=true;return 'Please reach out to your HRBP for more information.';}
+  return 'Ask ESIC: steps, documents, rates, eligibility, days, portal or branch office.';
 }
 
-/* ===== Faster turn-taking: silence stop using mic level ===== */
-let audioCtx,analyser,dataArray,mediaStream,rafId,lastVoice=Date.now();
+/* Mic waveform + quick silence stop */
 async function startAudio(){
   try{
     mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});
     audioCtx=new (window.AudioContext||window.webkitAudioContext)();
     const src=audioCtx.createMediaStreamSource(mediaStream);
     analyser=audioCtx.createAnalyser();analyser.fftSize=512;
-    dataArray=new Uint8Array(analyser.fftSize); src.connect(analyser);
-
+    dataArray=new Uint8Array(analyser.fftSize);src.connect(analyser);
     const ctx=osc.getContext('2d'),W=osc.width=osc.clientWidth,H=osc.height=osc.clientHeight;
-    function draw(){
-      rafId=requestAnimationFrame(draw);
+    (function draw(){rafId=requestAnimationFrame(draw);
       analyser.getByteTimeDomainData(dataArray);
-      // level 0..1
-      let sum=0; for(let i=0;i<dataArray.length;i++){const d=(dataArray[i]-128)/128; sum+=d*d;}
+      let sum=0;for(let i=0;i<dataArray.length;i++){const d=(dataArray[i]-128)/128;sum+=d*d;}
       const rms=Math.sqrt(sum/dataArray.length);
-      // scope
-      ctx.clearRect(0,0,W,H); ctx.beginPath(); ctx.strokeStyle='#22c55e'; ctx.lineWidth=2;
-      let x=0, slice=W/dataArray.length;
-      for(let i=0;i<dataArray.length;i++){const v=(dataArray[i]-128)/128; const y=H/2+v*(H*0.45); i?ctx.lineTo(x,y):ctx.moveTo(x,y); x+=slice;}
+      ctx.clearRect(0,0,W,H);ctx.beginPath();ctx.strokeStyle='#22c55e';ctx.lineWidth=2;
+      let x=0,slice=W/dataArray.length;
+      for(let i=0;i<dataArray.length;i++){const v=(dataArray[i]-128)/128,y=H/2+v*(H*0.45);i?ctx.lineTo(x,y):ctx.moveTo(x,y);x+=slice;}
       ctx.stroke();
-      // silence auto-stop (700ms idle)
-      if(rms>0.03){lastVoice=Date.now();}
-      if(Date.now()-lastVoice>700 && rec){ try{rec.stop();}catch{} }
-    }
-    draw();
+      if(rms>0.03) lastVoice=Date.now();
+      if(Date.now()-lastVoice>700 && rec){try{rec.stop();}catch{}}
+    })();
     mstatus.textContent='Mic On — Listening…';
-  }catch(e){
-    mstatus.textContent='Mic Off — Permission blocked';
-    alert('Please enable microphone: lock icon → Site settings → Microphone → Allow.');
-  }
+  }catch(e){mstatus.textContent='Mic Off — Permission blocked';alert('Enable microphone: lock icon → Site settings → Microphone → Allow.');}
 }
-function stopAudio(){ if(rafId)cancelAnimationFrame(rafId); if(mediaStream)mediaStream.getTracks().forEach(t=>t.stop()); if(audioCtx)audioCtx.close(); }
+function stopAudio(){if(rafId)cancelAnimationFrame(rafId);if(mediaStream)mediaStream.getTracks().forEach(t=>t.stop());if(audioCtx)audioCtx.close();}
 
-/* ===== Speech Recognition (brief + low latency) ===== */
+/* Speech recognition */
 function startRec(){
-  if(!SR){ mstatus.textContent='Speech recognition not supported. Use Chrome/Edge.'; return; }
+  if(!SR){mstatus.textContent='Speech recognition not supported on this browser.';return;}
   try{rec&&rec.stop();}catch{}
-  rec=new SR(); rec.lang='en-IN'; rec.interimResults=true; rec.continuous=true;
-  let final=''; let partial='';
+  rec=new SR();rec.lang='en-IN';rec.interimResults=true;rec.continuous=true;
+  let final='',partial='';
   rec.onstart=()=>mstatus.textContent='Mic On — Listening…';
-  rec.onresult=e=>{
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const txt=e.results[i][0].transcript;
-      if(e.results[i].isFinal){ final+=txt+' '; } else { partial=txt; }
-    }
-  };
-  rec.onend=()=>{
-    const q=(final.trim()||partial.trim());
-    if(q){
-      addBubble('me','<b>You:</b> '+q);
-      const a=route(q);
-      addBubble('ai','<b>Deepa:</b> '+a);
-      speak(a);
-    }
-    final=''; partial='';
-    if(listening && !ended) setTimeout(startRec,250);
-  };
-  try{ rec.start(); }catch{}
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){const txt=e.results[i][0].transcript;e.results[i].isFinal?final+=txt+' ':partial=txt;}};
+  rec.onend=()=>{const q=(final.trim()||partial.trim());if(q){addBubble('me','<b>You:</b> '+q);const a=route(q);addBubble('ai','<b>Deepa:</b> '+a);speak(a);}final='';partial='';if(listening&&!ended)setTimeout(startRec,250);};
+  try{rec.start();}catch{}
 }
-function stopRec(){ try{rec&&rec.stop();}catch{} }
+function stopRec(){try{rec&&rec.stop();}catch{}}
 
-/* ===== Controls ===== */
-async function micOn(){
-  listening=true; micBtn.classList.remove('off'); micBtn.textContent='🎙️ Mic On'; micBtn.setAttribute('aria-pressed','true');
-  await startAudio(); startRec();
-}
-function micOff(){
-  listening=false; micBtn.classList.add('off'); micBtn.textContent='🎙️ Mic Off'; micBtn.setAttribute('aria-pressed','false');
-  stopRec(); stopAudio(); mstatus.textContent='Mic Off'; speechSynthesis.cancel();
-}
-micBtn.onclick=()=>{ listening?micOff():micOn(); };
+/* Controls */
+async function micOn(){listening=true;micBtn.classList.remove('off');micBtn.textContent='🎙️ Mic On';micBtn.setAttribute('aria-pressed','true');await startAudio();startRec();}
+function micOff(){listening=false;micBtn.classList.add('off');micBtn.textContent='🎙️ Mic Off';micBtn.setAttribute('aria-pressed','false');stopRec();stopAudio();mstatus.textContent='Mic Off';speechSynthesis.cancel();}
+micBtn.onclick=()=>{listening?micOff():micOn();};
 
-/* ===== Start ===== */
-tapBtn.onclick=()=>{
-  splash.style.display='none';
-  const greet='Namaste, I am Deepa, your HR Sakhi. How can I help you today on E S I C maternity benefits?';
-  addBubble('ai','<b>Deepa:</b> '+greet);
-  speak(greet);
-  setTimeout(micOn,600);
-};
+/* Start */
+tapBtn.onclick=()=>{splash.style.display='none';populateVoices();const greet='Namaste, I am Deepa, your HR Sakhi. How can I help you today on E S I C maternity benefits?';addBubble('ai','<b>Deepa:</b> '+greet);speak(greet);setTimeout(micOn,600);};
 </script>
 </body>
 </html>
